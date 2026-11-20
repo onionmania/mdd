@@ -64,7 +64,7 @@ button{cursor:pointer}
 /* header */
 .head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 8px 14px}
 .hl{display:flex;align-items:center;gap:10px;min-width:0}
-.src{font-size:10.5px;line-height:1.35;color:var(--muted);letter-spacing:-.02em;min-width:0;padding-top:2px}
+.src{cursor:pointer;font-size:10.5px;line-height:1.35;color:var(--muted);letter-spacing:-.02em;min-width:0;padding-top:2px}
 .src b{display:block;font-weight:600;color:var(--text);opacity:.8}
 .title{display:flex;align-items:center;gap:8px;font-size:22px;font-weight:800;letter-spacing:-.04em;margin:0}
 .logo{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:16px;line-height:1;
@@ -261,6 +261,8 @@ details.legend p{margin:10px 0 0}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;background:var(--surface);border-radius:26px 26px 0 0;border:1px solid var(--line);border-bottom:0;
   transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);max-height:92vh;overflow:auto;padding:10px 18px max(26px,env(safe-area-inset-bottom))}
 .sheet.on{transform:none}
+.shtop{position:sticky;top:-10px;z-index:3;margin:-10px -18px 0;padding:10px 18px 8px;background:var(--surface);border-radius:26px 26px 0 0}
+.shbot{position:sticky;bottom:-26px;z-index:3;margin:18px -18px -26px;padding:12px 18px max(18px,env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line)}
 .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 12px}
 .sh-h{display:flex;justify-content:space-between;align-items:center}
 .sheet h2{margin:0;font-size:20px;letter-spacing:-.02em}
@@ -299,6 +301,10 @@ details.legend p{margin:10px 0 0}
 .cr .rg{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .cr .rg input{width:70px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);text-align:center;font-size:15px;outline:none}
 .cr .rg input:focus{border-color:var(--accent)}
+.cr .rg .st{min-width:54px;text-align:center;font-weight:600;color:var(--text);opacity:.75;font-size:14px}
+.cr .rg .tl{color:var(--muted);font-weight:700}
+.cr .rg .ie{display:inline-flex;align-items:center;gap:3px}
+.cr .rg input{width:62px}
 .rowset{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:13px}
 .rowset input[type=color]{width:40px;height:34px;border:0;padding:0;border-radius:10px;background:none;vertical-align:middle}
 .rowset input[type=color]::-webkit-color-swatch-wrapper{padding:0}
@@ -468,7 +474,24 @@ var SEED = null;
 var API_BASE = "https://mdd.dbjsh671.workers.dev";
 var FIRST_YEAR = 2000;                 // 데이터를 받아오는 가장 이른 연도
 var TIER_NAMES = ["평온","주의","경계","위험","공포"];
-var CACHE_HOURS = 6;
+var CACHE_HOURS = 6;          /* 장이 닫혀 있을 때 */
+var LIVE_MIN = 3;             /* 장 중일 때(분) */
+/* 미국 정규장(동부 09:30~16:00, 평일) 여부 — 공휴일은 반영하지 않아요 */
+function usOpen(){
+  try{
+    var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"numeric",hour12:false}).formatToParts(new Date()), o={};
+    p.forEach(function(x){ o[x.type]=x.value; });
+    if(o.weekday==="Sat"||o.weekday==="Sun") return false;
+    var m=(+o.hour%24)*60+(+o.minute); return m>=9*60+30 && m<16*60+5;
+  }catch(e){ return false; }
+}
+function cacheFresh(c){
+  var age=Date.now()-c.ts;
+  if(usOpen()) return age < LIVE_MIN*60000;
+  /* 장 중에 받아 둔 값이면 마감 뒤에 한 번 더 받아요 */
+  if(c.open) return false;
+  return age < CACHE_HOURS*3600000;
+}
 var THEMES = [
   {id:"midnight", name:"미드나이트", d:"트레이딩 앱", pv:["#0b0e14","#131824","#7c9cff"]},
   {id:"material", name:"머티리얼 3", d:"구글 기본",   pv:["#FEF7FF","#ECE6F0","#6750A4"]},
@@ -641,7 +664,7 @@ function parseSearch(j){
 
 /* 캐시 (브라우저에 잠깐 저장해서 다시 열 때 빨리 뜨게) */
 function cacheGet(sym){ try{ var raw=localStorage.getItem("mdd.c."+sym); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-function cacheSet(sym, s){ try{ localStorage.setItem("mdd.c."+sym, JSON.stringify({ts:Date.now(), name:s.name, cap:s.cap, t:s.t, c:s.c})); }catch(e){} }
+function cacheSet(sym, s){ try{ localStorage.setItem("mdd.c."+sym, JSON.stringify({ts:Date.now(), open:usOpen(), name:s.name, cap:s.cap, t:s.t, c:s.c})); }catch(e){} }
 
 /* 데모 데이터: 인터넷 연결이 안 되는 환경(예: 클로드 미리보기)에서 디자인을 보기 위한 가짜 데이터 */
 function hash(s){ var h=2166136261; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
@@ -779,11 +802,11 @@ function load(o0){
   }catch(e){}
 }
 
-function loadSeries(sym){
+function loadSeries(sym,force){
   if(API_BASE&&S.mode===null) S.mode="live";
   if(S.mode==="demo") return Promise.resolve(demoSeries(sym));
   var cached = cacheGet(sym);
-  if(cached && Date.now()-cached.ts < CACHE_HOURS*3600*1000){
+  if(cached && !force && cacheFresh(cached)){
     S.mode = S.mode || "live";
     return Promise.resolve({t:cached.t,c:cached.c,name:cached.name,cap:cached.cap||null,demo:false});
   }
@@ -1078,14 +1101,21 @@ function applyStyle(){
   if(S.accent){ st.setProperty("--accent",S.accent); st.setProperty("--onaccent", lum(S.accent)>0.35?"#111111":"#ffffff"); }
   else { st.removeProperty("--accent"); st.removeProperty("--onaccent"); }
 }
-function rangeLabel(mid,i){
-  var m=MET[mid], c=S.mx[mid].cuts, u=m.unit, nm=tierNames(mid)[i];
-  var pre = (u==="$"||mid==="cap") ? "$" : "", suf = u==="$" ? "" : u;
-  var txt;
-  if(m.asc) txt = i<4 ? pre+c[i]+suf+" 미만" : pre+c[3]+suf+" 이상";
-  else txt = i<4 ? c[i]+suf+" 초과" : c[3]+suf+" 이하";
-  return nm+" "+txt;
+var CEIL={prob:100,rsi:100};
+function rangeBounds(mid,i){   /* 이 단계의 [아래끝, 위끝] — 위끝이 null이면 끝없음 */
+  var m=MET[mid], c=S.mx[mid].cuts, lo, hi;
+  if(m.asc){ lo = i===0 ? (m.neg?null:0) : c[i-1]; hi = i<4 ? c[i] : null; }
+  else { hi = i===0 ? (CEIL[mid]!==undefined?CEIL[mid]:null) : c[i-1]; lo = i<4 ? c[i] : (m.neg?null:0); }
+  return [lo,hi];
 }
+function rangeText(mid,i){
+  var m=MET[mid], u=m.unit, pre=(u==="$"||mid==="cap")?"$":"", suf=u==="$"?"":u;
+  var b=rangeBounds(mid,i), f=function(v){ return pre+v+suf; };
+  if(b[0]===null) return f(b[1])+" 이하";
+  if(b[1]===null) return f(b[0])+" 이상";
+  return f(b[0])+" ~ "+f(b[1]);
+}
+function rangeLabel(mid,i){ return tierNames(mid)[i]+" "+rangeText(mid,i); }
 function legendHtml(){
   var scales=METRICS.filter(function(m){ return S.mx[m.id].on; }).map(function(m){
     var chips=""; for(var i=0;i<5;i++) chips+='<span style="--c:'+colorOr(m.id,i,"var(--muted)")+'">'+rangeLabel(m.id,i)+'</span>';
@@ -1160,7 +1190,7 @@ function srcInfo(){
   var last=0; S.tickers.forEach(function(sym){ var x=store[sym]; if(x&&x.t.length){ var d=x.t[x.t.length-1]; if(d>last) last=d; } });
   if(!last){ el.innerHTML=S.tickers.length?"<b>데이터</b>불러오는 중…":""; return; }
   var src=S.mode==="demo"?"샘플 데이터":"Yahoo Finance";
-  el.innerHTML="<b>"+src+"</b>"+shortDate(last)+" 종가";
+  el.innerHTML="<b>"+src+(S.mode==="demo"?"":" ↻")+"</b>"+shortDate(last)+(S.mode!=="demo"&&usOpen()?" 장중":" 종가");
 }
 function fadeRows(){ var r=document.getElementById("rows"); r.classList.remove("fade"); void r.offsetWidth; r.classList.add("fade"); }
 
@@ -1529,12 +1559,17 @@ function catSettings(){
 }
 function mRange(mid,i){
   var m=MET[mid], c=S.mx[mid].cuts, u=m.unit, pre=(u==="$"||mid==="cap")?"$":"", suf=u==="$"?"":u;
-  if(i<4){
-    var inp='<input type="number" inputmode="decimal" step="any"'+(m.neg?'':' min="0"')+' value="'+c[i]+'" data-mx="'+mid+'" data-i="'+i+'">';
-    if(mid==="mdd") return '하락 '+inp+suf+' 미만';
-    return m.asc ? pre+inp+suf+' 미만' : inp+suf+' 초과';
+  var b=rangeBounds(mid,i);
+  var inp=i<4?'<input type="number" inputmode="decimal" step="any"'+(m.neg?'':' min="0"')+' value="'+c[i]+'" data-mx="'+mid+'" data-i="'+i+'">':'<span class="st">'+c[3]+'</span>';
+  var fx=function(v){ return '<span class="st">'+pre+v+suf+'</span>'; };
+  var ip=function(){ return '<span class="ie">'+pre+inp+suf+'</span>'; };
+  var tl='<span class="tl">~</span>';
+  if(m.asc){
+    if(i===4) return ip()+'<span class="tl">이상</span>';
+    return (b[0]===null?'<span class="st">처음</span>':fx(b[0]))+tl+ip();
   }
-  return m.asc ? '<span>'+pre+c[3]+suf+' 이상</span>' : '<span>'+c[3]+suf+' 이하</span>';
+  if(i===4) return ip()+'<span class="tl">이하</span>';
+  return ip()+tl+(b[1]===null?'<span class="st">끝</span>':fx(b[1]));
 }
 function mChipsHtml(){
   return METRICS.map(function(m){
@@ -1590,14 +1625,15 @@ function cloudSettings(){
   return '<h3>클라우드 저장</h3><div class="syncrow" id="syncSt"></div><button class="reset" id="keyOut" style="padding:0">수정 모드 끄기</button>';
 }
 function settingsHtml(){
-  var head='<div class="grab"></div><div class="sh-h"><h2>설정</h2><button class="btn ghost" id="setClose" style="height:36px;padding:0 14px">닫기</button></div>';
+  var head='<div class="shtop"><div class="grab"></div><div class="sh-h"><h2>설정</h2><button class="btn" id="setClose" style="height:36px;padding:0 16px">완료</button></div></div>';
+  var done='<div class="shbot"><button class="btn" id="setClose2" style="width:100%;height:46px">완료</button></div>';
   var themes='<h3 style="margin-top:16px">화면 테마</h3><div class="themes">'+themeTiles()+'</div>';
-  if(!S.edit) return head+themes+'<div class="h3row"><h3>수정 모드</h3><button class="btn ghost" id="keyIn" style="height:34px;padding:0 14px">비밀번호 입력</button></div>';
+  if(!S.edit) return head+themes+'<div class="h3row"><h3>수정 모드</h3><button class="btn ghost" id="keyIn" style="height:34px;padding:0 14px">비밀번호 입력</button></div>'+done;
   return head+
     '<h3 style="margin-top:16px">기준 시작 연도</h3>'+
     '<div class="dialw"><div class="dial" id="dial" aria-label="시작 연도"></div><div class="dmark"></div></div>'+
     '<h3>화면 테마</h3><div class="themes">'+themeTiles()+'</div>'+schemeSeg()+
-    catSettings()+metricSettings()+cloudSettings()+backupSettings();
+    catSettings()+metricSettings()+cloudSettings()+backupSettings()+done;
 }
 /* 폰의 뒤로가기: 열려 있는 설정·검색창을 닫고 기본 화면으로 돌아와요 */
 var ovPushed={settings:false,drop:false};
@@ -1714,7 +1750,7 @@ function onSettingsClick(e){
   if(t.closest("#keyOut")){ lsDel(KEY_STORE); S.edit=false; render(); refreshSettings(); toast("수정 모드를 껐어요"); return; }
   if(t.closest("#cfgExport")){ exportDialog(); return; }
   if(t.closest("#cfgImport")){ importDialog(); return; }
-  if(t.id==="setClose") closeSettings();
+  if(t.id==="setClose"||t.id==="setClose2") closeSettings();
 }
 
 /* 토스트 */
@@ -1792,10 +1828,17 @@ function onDropClick(e){
 }
 
 /* ═════════════ 동작 ═════════════ */
-function fetchTicker(sym){
-  loading[sym]=true; render();
-  return loadSeries(sym).then(function(s){ store[sym]=s; delete loading[sym]; render(); return true; })
-  .catch(function(){ delete loading[sym]; render(); return false; });
+function fetchTicker(sym,force,quiet){
+  if(!quiet){ loading[sym]=true; render(); }
+  return loadSeries(sym,force).then(function(s){ store[sym]=s; delete loading[sym]; memo={}; render(); return true; })
+  .catch(function(){ delete loading[sym]; if(!quiet) render(); return false; });
+}
+var lastRefresh=Date.now();
+function refreshAll(force,quiet){
+  if(S.mode==="demo") return;
+  lastRefresh=Date.now();
+  var done=0, tot=S.tickers.length;
+  S.tickers.forEach(function(sym){ fetchTicker(sym,force,quiet).then(function(){ done++; if(force&&done===tot) toast("최신 데이터로 갱신했어요"); }); });
 }
 function addTicker(raw){
   var sym=String(raw||"").trim().toUpperCase().replace(/\s+/g,"");
@@ -1904,6 +1947,9 @@ function init(){
 
   S.tickers.forEach(function(s){ loading[s]=true; });
   render();
+  var si=document.getElementById("srcInfo"); if(si) si.addEventListener("click",function(){ if(S.mode!=="demo"){ toast("새로 불러오는 중…"); refreshAll(true,true); } });
+  setInterval(function(){ if(!document.hidden && usOpen() && Date.now()-lastRefresh>LIVE_MIN*60000) refreshAll(false,true); },30000);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden && Date.now()-lastRefresh>(usOpen()?LIVE_MIN*60000:CACHE_HOURS*3600000)) refreshAll(false,true); });
   if(API_BASE){
     pullCloud();
     document.addEventListener("visibilitychange",function(){ if(!document.hidden && sync.state!=="pending" && sync.state!=="saving") pullCloud(true); });
