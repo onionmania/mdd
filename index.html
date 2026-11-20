@@ -20,24 +20,12 @@
   --s0:#34d3a0; --s1:#e8cb52; --s2:#f59a3d; --s3:#f2564f; --s4:#e8217a;
   --shadow:0 10px 30px rgba(0,0,0,.35);
 }
-[data-theme="paper"]{
-  --bg:#f7efe4; --surface:#fffaf3; --surface2:#f2e8da; --line:#e6d9c6;
-  --text:#1d1b17; --muted:#7b7467; --accent:#3d5afe; --onaccent:#ffffff;
-  --s0:#0f9d74; --s1:#b58a0c; --s2:#d4690f; --s3:#d63a34; --s4:#a8114f;
-  --shadow:0 8px 24px rgba(60,50,30,.10);
-}
-[data-theme="terminal"]{
-  --bg:#000000; --surface:#0e0e0e; --surface2:#181818; --line:#292929;
-  --text:#f4ecdc; --muted:#8c8573; --accent:#ffa31a; --onaccent:#000000;
-  --s0:#3ddc84; --s1:#ffd23f; --s2:#ff8a1f; --s3:#ff4545; --s4:#ff2d95;
-  --shadow:0 10px 30px rgba(0,0,0,.6);
-}
-/* 내 테마: 아래 기본값 위에 설정에서 고른 색이 덮어써져요 */
-[data-theme="custom"]{
-  --bg:#0b0e14; --surface:#131824; --surface2:#1a2132; --line:#232b3d;
-  --text:#eef1f7; --muted:#8b95ab; --accent:#7c9cff; --onaccent:#0b0e14;
-  --s0:#34d3a0; --s1:#e8cb52; --s2:#f59a3d; --s3:#f2564f; --s4:#e8217a;
-  --shadow:0 10px 30px rgba(0,0,0,.3);
+[data-theme="material"]{
+  --bg:#FEF7FF; --surface:#F7F2FA; --surface2:#ECE6F0; --line:#E2DCE8;
+  --text:#1D1B20; --muted:#6D6776; --accent:#6750A4; --onaccent:#FFFFFF;
+  --s0:#1B8A5A; --s1:#A97A00; --s2:#C75F00; --s3:#BA1A1A; --s4:#9C0A5B;
+  --shadow:0 1px 3px rgba(60,40,90,.14),0 4px 12px rgba(60,40,90,.06);
+  --radius:28px;
 }
 [data-theme="glass"]{
   --bg:#0a0e1f; --surface:rgba(255,255,255,.07); --surface2:rgba(255,255,255,.11); --line:rgba(255,255,255,.16);
@@ -51,6 +39,18 @@
   --s0:#00a870; --s1:#e0a800; --s2:#ff7a00; --s3:#e5001f; --s4:#c2007a;
   --shadow:6px 6px 0 #111;
   background-image:radial-gradient(rgba(0,0,0,.14) 1px,transparent 1px); background-size:16px 16px;
+}
+[data-theme="material"][data-scheme="dark"]{
+  --bg:#141218; --surface:#1D1B20; --surface2:#2B2930; --line:#36343B;
+  --text:#E6E0E9; --muted:#938F99; --accent:#D0BCFF; --onaccent:#381E72;
+  --s0:#34d3a0; --s1:#e8cb52; --s2:#f59a3d; --s3:#ff6b62; --s4:#ff4f9a;
+  --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.25);
+}
+[data-theme="glass"][data-scheme="light"]{
+  --bg:#eef1fb; --surface:rgba(255,255,255,.55); --surface2:rgba(255,255,255,.72); --line:rgba(20,30,70,.12);
+  --text:#141a33; --muted:rgba(20,30,70,.56); --accent:#4a63e0; --onaccent:#ffffff;
+  --s0:#0f9d74; --s1:#b58a0c; --s2:#d4690f; --s3:#d63a34; --s4:#a8114f;
+  --shadow:0 14px 40px rgba(40,50,110,.14), inset 0 1px 0 rgba(255,255,255,.9);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-text-size-adjust:100%}
@@ -161,6 +161,13 @@ button{cursor:pointer}
 /* 드래그 */
 .dclone{position:fixed;z-index:50;pointer-events:none;margin:0;box-shadow:0 14px 30px rgba(0,0,0,.4);border-radius:14px;transform:scale(1.03);background:var(--surface);overflow:hidden}
 .dclone.tab{background:var(--accent);color:var(--onaccent)}
+.dclone{transition:width .16s ease,height .16s ease,border-radius .16s ease}
+.dclone.mini{width:44px!important;height:44px!important;border-radius:50%;transform:none;border:1px solid var(--accent)}
+.dclone.mini::before{display:none}
+.dclone.mini .rr{display:flex;justify-content:center;align-items:center;height:44px;padding:0;background:none}
+.dclone.mini .rr>*:not(.c-t){display:none}
+.dclone.mini .tk{display:none}
+.dclone.mini .av{width:30px;height:30px}
 .rw.ghost{background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
 .rw.ghost>*{opacity:0}
 .dragmode>*{transition:transform .26s cubic-bezier(.2,.8,.2,1)}
@@ -216,23 +223,23 @@ details.legend p{margin:10px 0 0}
 .scale span{font-size:11px;padding:3px 9px;border-radius:99px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);font-weight:600}
 
 /* ───── 종목 검색 (위에서 내려오는 패널) ───── */
-.veil2{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .28s;z-index:30}
+.veil2{position:fixed;inset:0;background:rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .28s;z-index:30}
 .veil2.on{opacity:1;pointer-events:auto}
 .drop{position:fixed;top:0;left:0;right:0;z-index:31;max-width:560px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-top:0;
-  border-radius:0 0 28px 28px;box-shadow:var(--shadow);transform:translateY(-106%);transition:transform .45s cubic-bezier(.16,1,.3,1);
-  padding:max(14px,env(safe-area-inset-top)) 14px 12px;max-height:84vh;display:flex;flex-direction:column}
+  border-radius:0 0 22px 22px;box-shadow:var(--shadow);transform:translateY(-106%);transition:transform .45s cubic-bezier(.16,1,.3,1);
+  padding:max(10px,env(safe-area-inset-top)) 12px 10px;display:flex;flex-direction:column}
 .drop.on{transform:none}
-.srch{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:16px;padding:0 6px 0 14px;height:50px;flex:none;border:1px solid transparent}
+.srch{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:16px;padding:0 6px 0 14px;height:46px;flex:none;border:1px solid transparent}
 .srch:focus-within{border-color:var(--accent)}
 .srch svg{width:19px;height:19px;color:var(--muted);flex:none}
-.srch input{flex:1;min-width:0;height:48px;border:0;background:none;outline:none;font-size:16px}
+.srch input{flex:1;min-width:0;height:44px;border:0;background:none;outline:none;font-size:16px}
 .srch input::placeholder{color:var(--muted)}
 .srch .x{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:0 10px;height:36px}
 .catpick{flex:none;margin-top:8px;padding:4px 2px;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none}
 .catpick::-webkit-scrollbar{display:none}
 .catpick .lb{flex:none;font-size:11.5px;color:var(--muted);font-weight:600}
 .catpick .cchip{flex:none}
-.dres{overflow:auto;margin-top:6px;min-height:0;padding-bottom:4px}
+.dres{display:none;overflow:auto;margin-top:4px;min-height:0;max-height:min(44vh,330px);padding-bottom:2px}
 .dres .sl{font-size:11.5px;color:var(--muted);font-weight:600;margin:12px 4px 2px}
 .sr{display:flex;align-items:center;gap:11px;padding:10px 4px;border-top:1px solid var(--line);animation:fadein .3s both}
 .sr:first-of-type{border-top:0}
@@ -271,7 +278,10 @@ details.legend p{margin:10px 0 0}
 .dy::after{content:"";display:block;width:2px;height:8px;margin:5px auto 0;background:currentColor;opacity:.35;border-radius:2px}
 .dmark{position:absolute;left:50%;top:9px;bottom:9px;width:80px;margin-left:-40px;border-radius:14px;border:2px solid var(--accent);pointer-events:none}
 
-.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.themes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.themes .th-b{padding:7px 3px 8px;font-size:11.5px;letter-spacing:-.03em;white-space:nowrap;overflow:hidden}
+.themes .th-d{font-size:10px;letter-spacing:-.02em}
+.themes .th-b .pv{height:22px;margin-bottom:6px}
 .th-d{font-size:10.5px;font-weight:400;color:var(--muted);margin-top:2px}
 .th-b{border:2px solid var(--line);border-radius:14px;background:var(--surface2);padding:8px 4px 9px;font-size:12px;font-weight:600;text-align:center;min-width:0}
 .th-b[aria-pressed="true"]{border-color:var(--accent)}
@@ -299,7 +309,10 @@ details.legend p{margin:10px 0 0}
 .seg button{border:2px solid var(--line);background:var(--surface2);border-radius:14px;padding:11px 8px;font-size:13px;font-weight:700;text-align:center;line-height:1.35}
 .seg button small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:2px}
 .seg button[aria-pressed="true"]{border-color:var(--accent)}
-.mchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mchips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.mchips .cchip{padding:7px 2px;text-align:center;white-space:nowrap;font-size:12px;min-width:0}
+.seg3{grid-template-columns:repeat(3,1fr)}
+.seg3 button{padding:9px 6px}
 .fold{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .4s cubic-bezier(.2,.8,.2,1),opacity .3s}
 .fold.open{grid-template-rows:1fr;opacity:1}
 .foldin{overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s .4s}
@@ -332,6 +345,13 @@ details.legend p{margin:10px 0 0}
 .toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,30px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
+/* ───── 머티리얼 3 ───── */
+[data-theme="material"] .tab.on{background:#E8DEF8;color:#1D192B}
+[data-theme="material"] :is(.gear,.cbtn){background:#F3EDF7;border-color:transparent}
+[data-theme="material"] .tab{background:transparent;border-color:#CAC4D0;color:#49454F}
+[data-theme="material"] .tab.on{border-color:transparent}
+[data-theme="material"] .tbl{border-color:transparent}
+
 /* ───── 리퀴드 글래스 ───── */
 [data-theme="glass"] body{background:transparent}
 [data-theme="glass"] body::before{content:"";position:fixed;inset:-25%;z-index:-1;pointer-events:none;
@@ -346,6 +366,17 @@ details.legend p{margin:10px 0 0}
 [data-theme="glass"] :is(.sheet,.drop,.dlg){background:rgba(22,28,56,.58);-webkit-backdrop-filter:blur(34px) saturate(180%);backdrop-filter:blur(34px) saturate(180%);border-color:rgba(255,255,255,.2);box-shadow:var(--shadow)}
 [data-theme="glass"] .dclone{background:rgba(44,52,92,.9)}
 [data-theme="glass"] .sech{background:rgba(255,255,255,.08)}
+
+[data-theme="material"][data-scheme="dark"] .tab{border-color:#49454F;color:#CAC4D0}
+[data-theme="material"][data-scheme="dark"] .tab.on{background:#4A4458;color:#E8DEF8}
+[data-theme="material"][data-scheme="dark"] :is(.gear,.cbtn){background:#2B2930}
+[data-theme="glass"][data-scheme="light"] body::before{opacity:.55}
+[data-theme="glass"][data-scheme="light"] .rw.open>.rr{background:rgba(255,255,255,.45)}
+[data-theme="glass"][data-scheme="light"] :is(.tbl,.gear,.cbtn,details.legend,.tab){box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+[data-theme="glass"][data-scheme="light"] .tbl{box-shadow:var(--shadow)}
+[data-theme="glass"][data-scheme="light"] :is(.sheet,.drop,.dlg){background:rgba(255,255,255,.66);border-color:rgba(255,255,255,.9)}
+[data-theme="glass"][data-scheme="light"] .dclone{background:rgba(255,255,255,.92)}
+[data-theme="glass"][data-scheme="light"] .sech{background:rgba(255,255,255,.4)}
 
 /* ───── 브루탈 ───── */
 [data-theme="brutal"] body{background:transparent}
@@ -408,7 +439,6 @@ details.legend p{margin:10px 0 0}
     <input id="symIn" placeholder="티커나 회사 이름 (예: AAPL, 엔비디아)" maxlength="30" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search">
     <button class="x" id="dropClose">닫기</button>
   </div>
-  <div class="catpick" id="catpick"></div>
   <div class="dres" id="dres"></div>
 </div>
 
@@ -432,11 +462,9 @@ var TIER_NAMES = ["평온","주의","경계","위험","공포"];
 var CACHE_HOURS = 6;
 var THEMES = [
   {id:"midnight", name:"미드나이트", d:"트레이딩 앱", pv:["#0b0e14","#131824","#7c9cff"]},
-  {id:"paper",    name:"페이퍼",     d:"경제신문",   pv:["#f7efe4","#fffaf3","#3d5afe"]},
-  {id:"terminal", name:"터미널",     d:"증권 단말기", pv:["#000000","#0e0e0e","#ffa31a"]},
+  {id:"material", name:"머티리얼 3", d:"구글 기본",   pv:["#FEF7FF","#ECE6F0","#6750A4"]},
   {id:"glass",    name:"리퀴드 글래스", d:"유리 질감",   pv:["#0a0e1f","#4a5bd8","#ff5fa2"]},
-  {id:"brutal",   name:"브루탈",     d:"굵은 테두리", pv:["#f2ede0","#ffe27a","#ff5b3a"]},
-  {id:"custom",   name:"내 테마",    d:"직접 색 선택", pv:null}
+  {id:"brutal",   name:"브루탈",     d:"굵은 테두리", pv:["#f2ede0","#ffe27a","#ff5b3a"]}
 ];
 var STATUS_DARK  = ["#34d3a0","#e8cb52","#f59a3d","#f2564f","#e8217a"];   // 어두운 배경용 상태 색
 var STATUS_LIGHT = ["#0f9d74","#b58a0c","#d4690f","#d63a34","#a8114f"];   // 밝은 배경용 상태 색
@@ -626,27 +654,27 @@ function demoSeries(sym){
 function defMx(){
   var o={}; METRICS.forEach(function(m){ o[m.id]={on:m.on, colors:[null,null,null,null,null], cuts:m.def.slice()}; }); return o;
 }
-var S = { edit:true, booting:false, year:DEFAULT_YEAR, theme:"midnight", accent:null, custom:null,
+var S = { edit:true, booting:false, year:DEFAULT_YEAR, theme:"midnight", scheme:"auto", accent:null, custom:null,
           sort:{key:"prob",dir:1}, tickers:DEFAULT_TICKERS.slice(), mx:defMx(),
           useCats:false, catLayout:"h", cats:[], catOf:{}, tab:"_all", collapsed:{}, addCat:"_none",
           mode:null /* live | demo */ };
 var store = {}, loading = {}, openSym = null, memo = {}, pend = {}, setM = "mdd";
 
 function save(){
-  try{ localStorage.setItem("mdd.state", JSON.stringify({year:S.year,theme:S.theme,accent:S.accent,custom:S.custom,sort:S.sort,tickers:S.tickers,mx:S.mx,
+  try{ localStorage.setItem("mdd.state", JSON.stringify({year:S.year,theme:S.theme,scheme:S.scheme,accent:S.accent,custom:S.custom,sort:S.sort,tickers:S.tickers,mx:S.mx,
     useCats:S.useCats,catLayout:S.catLayout,cats:S.cats,catOf:S.catOf,tab:S.tab,collapsed:S.collapsed,addCat:S.addCat})); }catch(e){}
   scheduleCloud();
 }
 
 /* ═════════════ 클라우드 저장·불러오기 ═════════════ */
 var KEY_STORE="mdd.key", DIRTY_STORE="mdd.dirty", VTHEME_STORE="mdd.vtheme";
-var sync={state:"idle",timer:null}, lastPushStr="";
+var sync={state:"idle",timer:null}, lastPushStr="", lastCfgDiff="";
 function lsGet(k){ try{ return localStorage.getItem(k)||""; }catch(e){ return ""; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
-function cloudObj(){ return {v:1,rev:Date.now(),year:S.year,theme:S.theme,custom:S.custom,tickers:S.tickers,mx:S.mx,useCats:S.useCats,cats:S.cats,catOf:S.catOf}; }
+function cloudObj(){ return {v:1,rev:Date.now(),sort:S.sort,year:S.year,theme:S.theme,scheme:S.scheme,custom:S.custom,tickers:S.tickers,mx:S.mx,useCats:S.useCats,cats:S.cats,catOf:S.catOf}; }
 function fullStr(){ var o=cloudObj(); delete o.rev; return JSON.stringify(o); }
-function diffStr(o){ return JSON.stringify({year:o.year,tickers:o.tickers,mx:o.mx,useCats:!!o.useCats,cats:o.cats||[],catOf:o.catOf||{}}); }
+function diffStr(o){ return JSON.stringify({sort:o.sort||null,year:o.year,tickers:o.tickers,mx:o.mx,useCats:!!o.useCats,cats:o.cats||[],catOf:o.catOf||{}}); }
 function updateSyncUi(){
   var el=document.getElementById("syncSt"); if(!el) return;
   el.textContent=({idle:"연결됨",pending:"저장 중…",saving:"저장 중…",ok:"클라우드에 저장됨",fail:"저장 실패 · 다시 시도하는 중"})[sync.state]||"";
@@ -659,12 +687,12 @@ function scheduleCloud(){
 }
 function pushCloud(){
   if(!API_BASE||!S.edit) return Promise.resolve();
-  var str=fullStr(); sync.state="saving"; updateSyncUi();
-  return fetch(API_BASE+"/config",{method:"PUT",headers:{"Content-Type":"application/json","X-Edit-Key":lsGet(KEY_STORE)},body:JSON.stringify(cloudObj())})
+  var str=fullStr(), obj=cloudObj(); sync.state="saving"; updateSyncUi();
+  return fetch(API_BASE+"/config",{method:"PUT",headers:{"Content-Type":"application/json","X-Edit-Key":lsGet(KEY_STORE)},body:JSON.stringify(obj)})
     .then(function(r){
       if(r.status===401){ var e=new Error("auth"); throw e; }
       if(!r.ok) throw new Error("http");
-      lastPushStr=str; if(fullStr()===str) lsDel(DIRTY_STORE); sync.state="ok"; updateSyncUi();
+      lastPushStr=str; lastCfgDiff=diffStr(obj); if(fullStr()===str) lsDel(DIRTY_STORE); sync.state="ok"; updateSyncUi();
     }).catch(function(e){
       sync.state="fail"; updateSyncUi();
       if(e&&e.message==="auth"){ S.edit=false; lsDel(KEY_STORE); render(); toast("수정 비밀번호가 맞지 않아요. 설정에서 다시 입력해 주세요"); return; }
@@ -675,7 +703,7 @@ function pushCloud(){
 function applyCloud(cfg){
   S.useCats=false; S.cats=[]; S.catOf={};
   load(cfg);
-  if(!S.edit){ var vt=lsGet(VTHEME_STORE); if(vt&&THEMES.some(function(t){return t.id===vt&&t.id!=="custom";})) S.theme=vt; }
+  if(!S.edit){ var vt=lsGet(VTHEME_STORE); if(vt&&THEMES.some(function(t){return t.id===vt;})) S.theme=vt; var vs=lsGet("mdd.vscheme"); if(vs) S.scheme=vs; }
 }
 function pullCloud(quiet){
   if(!API_BASE) return Promise.resolve();
@@ -683,8 +711,9 @@ function pullCloud(quiet){
     S.booting=false;
     var has=cfg&&Array.isArray(cfg.tickers)&&cfg.tickers.length;
     if(has){
+      var ds=diffStr(cfg);
       if(S.edit&&lsGet(DIRTY_STORE)==="1"){ pushCloud(); }
-      else if(diffStr(cfg)!==diffStr(cloudObj())||(!S.edit&&!lastPushStr)){ applyCloud(cfg); lastPushStr=fullStr(); save(); }
+      else if(ds!==lastCfgDiff){ applyCloud(cfg); lastCfgDiff=ds; lastPushStr=fullStr(); save(); if(S.edit&&!cfg.sort) pushCloud(); }
       else if(!lastPushStr){ lastPushStr=fullStr(); }
     } else {
       if(!S.tickers.length) S.tickers=DEFAULT_TICKERS.slice();
@@ -715,7 +744,7 @@ function load(o0){
     var o = o0 || JSON.parse(localStorage.getItem("mdd.state")||"null") || SEED; if(!o) return;
     if(o.year) S.year=o.year;
     if(o.theme && THEMES.some(function(t){return t.id===o.theme;})) S.theme=o.theme;
-    if(o.custom&&o.custom.bg) S.custom=o.custom;
+    if(o.scheme==="light"||o.scheme==="dark"||o.scheme==="auto") S.scheme=o.scheme;
     if(o.sort&&o.sort.key) S.sort=o.sort;
     if(o.tickers&&o.tickers.length) S.tickers=o.tickers;
     if(o.mx){
@@ -1007,18 +1036,24 @@ function lum(hex){
   return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
 }
 var THEME_VARS=["--bg","--surface","--surface2","--line","--text","--muted","--s0","--s1","--s2","--s3","--s4"];
+var DUAL={material:"light",glass:"dark"};   // 라이트·다크를 고를 수 있는 테마 (값 = 기본 모드)
+var darkMQ=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
+function schemeOf(){
+  if(!DUAL[S.theme]) return null;
+  if(S.scheme==="light"||S.scheme==="dark") return S.scheme;
+  return darkMQ ? (darkMQ.matches?"dark":"light") : DUAL[S.theme];
+}
+if(darkMQ&&darkMQ.addEventListener) darkMQ.addEventListener("change",function(){ if(S.scheme==="auto"&&DUAL[S.theme]) render(); });
+function schemeSeg(){
+  if(!DUAL[S.theme]) return "";
+  return '<div class="seg seg3">'+[["light","라이트"],["dark","다크"],["auto","시스템"]].map(function(x){
+    return '<button data-sch="'+x[0]+'" aria-pressed="'+(S.scheme===x[0])+'">'+x[1]+'</button>'; }).join("")+'</div>';
+}
 function applyStyle(){
-  var root=document.documentElement, st=root.style;
+  var root=document.documentElement, st=root.style, sc=schemeOf();
   root.setAttribute("data-theme",S.theme);
+  if(sc) root.setAttribute("data-scheme",sc); else root.removeAttribute("data-scheme");
   THEME_VARS.forEach(function(v){ st.removeProperty(v); });
-  if(S.theme==="custom" && S.custom){
-    var c=S.custom, light=lum(c.surface)>0.4, pal=light?STATUS_LIGHT:STATUS_DARK;
-    st.setProperty("--bg",c.bg); st.setProperty("--surface",c.surface); st.setProperty("--text",c.text);
-    st.setProperty("--surface2","color-mix(in srgb, "+c.surface+" 88%, "+c.text+")");
-    st.setProperty("--line","color-mix(in srgb, "+c.surface+" 80%, "+c.text+")");
-    st.setProperty("--muted","color-mix(in srgb, "+c.text+" 55%, "+c.bg+")");
-    for(var k=0;k<5;k++) st.setProperty("--s"+k,pal[k]);
-  }
   if(S.accent){ st.setProperty("--accent",S.accent); st.setProperty("--onaccent", lum(S.accent)>0.35?"#111111":"#ffffff"); }
   else { st.removeProperty("--accent"); st.removeProperty("--onaccent"); }
 }
@@ -1353,7 +1388,11 @@ function switchTabDrag(id){
 }
 function layoutRowDrag(){
   var d=drag, root=document.getElementById("rows"), cont=null;
-  d.clone.style.left=(d.lx-d.gx)+"px"; d.clone.style.top=(d.ly-d.gy)+"px";
+  var tbar=document.getElementById("tabs").getBoundingClientRect();
+  var mini=!d.grouped && tbar.height>0 && d.ly<tbar.bottom+34;
+  if(mini!==d.mini){ d.mini=mini; d.clone.classList.toggle("mini",mini); }
+  if(mini){ d.clone.style.left=(d.lx-22)+"px"; d.clone.style.top=(d.ly-22)+"px"; }
+  else { d.clone.style.left=(d.lx-d.gx)+"px"; d.clone.style.top=(d.ly-d.gy)+"px"; }
   d.sv=0; d.svx=0;
   if(d.ly<90) d.sv=-10; else if(d.ly>window.innerHeight-90) d.sv=10;
   var cc=d.ly-d.gy+d.h/2+window.scrollY;
@@ -1448,17 +1487,13 @@ function hexOf(mid,i){
   return MET[mid].risk ? curColor("--s"+i) : GEN_COLORS[i];
 }
 function themeTiles(){
-  return THEMES.filter(function(t){ return S.edit||t.id!=="custom"; }).map(function(t){
+  var sc=null; if(DUAL[S.theme]) sc=schemeOf();
+  return THEMES.map(function(t){
     var pv=t.pv;
-    if(!pv){ var c=S.custom; pv = c ? [c.bg,c.surface,c.text] : ["#3a3a3a","#8a8a8a","#d0d0d0"]; }
+    if(t.id==="material" && sc==="dark" && S.theme==="material") pv=["#141218","#2B2930","#D0BCFF"];
+    if(t.id==="glass" && sc==="light" && S.theme==="glass") pv=["#eef1fb","#9fb0ff","#ff8fc0"];
     return '<button class="th-b" data-theme-id="'+t.id+'" aria-pressed="'+(S.theme===t.id)+'"><div class="pv">'+pv.map(function(c){return '<i style="background:'+c+'"></i>';}).join("")+'</div>'+t.name+'<div class="th-d">'+t.d+'</div></button>';
   }).join("");
-}
-function customEditor(){
-  if(S.theme!=="custom"||!S.custom) return "";
-  function row(k,label){ return '<div class="rowset"><span>'+label+'</span><input type="color" data-cu="'+k+'" value="'+hex6(S.custom[k])+'" aria-label="'+label+'"></div>'; }
-  return '<div class="desc" style="margin-top:14px">내 테마는 지금 보던 화면 색에서 시작해요. 아래에서 바꿔 보세요. 표 배경이 밝은지 어두운지에 맞춰 평온~공포 색은 자동으로 골라져요.</div>'+
-    row("bg","배경")+row("surface","표·카드 배경")+row("text","글자");
 }
 function catSettings(){
   return '<div class="h3row"><h3>카테고리</h3><button class="switch" id="catToggle" role="switch" aria-checked="'+S.useCats+'" aria-label="카테고리 사용"></button></div>';
@@ -1532,7 +1567,7 @@ function settingsHtml(){
   return head+
     '<h3 style="margin-top:16px">기준 시작 연도</h3>'+
     '<div class="dialw"><div class="dial" id="dial" aria-label="시작 연도"></div><div class="dmark"></div></div>'+
-    '<h3>화면 테마</h3><div class="themes">'+themeTiles()+'</div>'+customEditor()+
+    '<h3>화면 테마</h3><div class="themes">'+themeTiles()+'</div>'+schemeSeg()+
     catSettings()+metricSettings()+cloudSettings()+backupSettings();
 }
 function openSettings(){
@@ -1596,7 +1631,7 @@ function onSettingsInput(e){
   var t=e.target;
   if(t.hasAttribute("data-cm")){            // 색: 바꾸는 즉시 반영
     S.mx[t.getAttribute("data-cm")].colors[+t.getAttribute("data-ci")]=t.value; save(); render();
-  } else if(t.hasAttribute("data-cu")){ S.custom[t.getAttribute("data-cu")]=t.value; applyStyle(); save();
+
   } else if(t.id==="accIn"){ S.accent=t.value; applyStyle(); save(); }
 }
 function onSettingsChange(e){
@@ -1615,10 +1650,10 @@ function onSettingsClick(e){
   var t=e.target, b;
   if((b=t.closest("[data-theme-id]"))){
     var id=b.getAttribute("data-theme-id");
-    if(id==="custom" && !S.custom){ S.custom={bg:curColor("--bg"),surface:curColor("--surface"),text:curColor("--text")}; }
     S.theme=id; if(!S.edit) lsSet(VTHEME_STORE,id); save(); render(); refreshSettings(); return;
   }
   if(t.closest("#catToggle")){ if(S.useCats){ S.useCats=false; } else { enableCats(); } save(); render(); refreshSettings(); return; }
+  if((b=t.closest("[data-sch]"))){ S.scheme=b.getAttribute("data-sch"); if(!S.edit) lsSet("mdd.vscheme",S.scheme); save(); render(); refreshSettings(); return; }
   if((b=t.closest("[data-layout]"))){ S.catLayout=b.getAttribute("data-layout"); save(); render(); fadeRows(); refreshSettings(); return; }
   if((b=t.closest("[data-mchip]"))){
     setM=b.getAttribute("data-mchip");
@@ -1646,23 +1681,16 @@ function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; 
 /* ═════════════ 종목 검색 패널 ═════════════ */
 var Q = {timer:null, seq:0, items:[], label:"", direct:null, remote:[]};
 function openDrop(){
-  if(catsActive()){ S.addCat = (S.catLayout==="h" && S.tab!=="_all") ? S.tab : (S.addCat||"_none"); if(S.addCat!=="_none" && !S.cats.some(function(c){return c.id===S.addCat;})) S.addCat="_none"; }
+  S.addCat=(catsActive()&&S.tab!=="_all"&&S.tab!=="_none")?S.tab:"_none";
   var inp=document.getElementById("symIn"); inp.value="";
-  Q.remote=[]; renderCatPick(); runLocal();
+  inp.placeholder=(S.addCat!=="_none"?"‘"+catName(S.addCat)+"’에 추가 · ":"")+"티커나 회사 이름";
+  Q.remote=[]; runLocal();
   document.getElementById("veil2").classList.add("on"); document.getElementById("drop").classList.add("on");
   inp.focus();
 }
 function closeDrop(){
   document.getElementById("veil2").classList.remove("on"); document.getElementById("drop").classList.remove("on");
   document.getElementById("symIn").blur();
-}
-function renderCatPick(){
-  var el=document.getElementById("catpick");
-  if(!catsActive()){ el.innerHTML=""; el.style.display="none"; return; }
-  el.style.display="";
-  el.innerHTML='<span class="lb">넣을 곳</span>'+S.cats.concat([{id:"_none",name:"미분류"}]).map(function(c){
-    return '<button class="cchip'+(c.id===S.addCat?' on':'')+'" data-addcat="'+esc(c.id)+'">'+esc(c.name)+'</button>';
-  }).join("");
 }
 function localSearch(q){
   q=q.toLowerCase();
@@ -1674,15 +1702,15 @@ function localSearch(q){
     if(score>=0) out.push({sc:score,idx:idx,item:{sym:p[0],name:p[1],ex:p[2]}});
   });
   out.sort(function(a,b){ return a.sc-b.sc || a.idx-b.idx; });
-  return out.slice(0,8).map(function(o){ return o.item; });
+  return out.slice(0,6).map(function(o){ return o.item; });
 }
 function runLocal(){
   var q=document.getElementById("symIn").value.trim();
-  if(!q){ Q.items=POP.slice(0,16).map(function(p){ return {sym:p[0],name:p[1],ex:p[2]}; }); Q.label="인기 종목"; Q.direct=null; renderResults(); return; }
+  if(!q){ Q.items=[]; Q.label=""; Q.direct=null; renderResults(); return; }
   var local=localSearch(q), seen={};
   local.forEach(function(x){ seen[x.sym]=1; });
-  Q.remote.forEach(function(x){ if(!seen[x.sym] && local.length<10){ local.push(x); seen[x.sym]=1; } });
-  Q.items=local; Q.label=local.length?"검색 결과":"";
+  Q.remote.forEach(function(x){ if(!seen[x.sym] && local.length<6){ local.push(x); seen[x.sym]=1; } });
+  Q.items=local; Q.label="";
   var cand=q.toUpperCase().replace(/\s+/g,"");
   Q.direct = (/^[A-Z0-9.\-^=]{1,12}$/.test(cand) && !seen[cand]) ? cand : null;
   renderResults();
@@ -1705,8 +1733,8 @@ function renderResults(){
   if(Q.label) html+='<div class="sl">'+Q.label+'</div>';
   Q.items.forEach(function(it,i){ html+=resultRow(it.sym,it.name,it.ex,i); });
   if(Q.direct) html+=resultRow(Q.direct,"이 티커로 직접 추가","",Q.items.length);
-  if(!Q.items.length && !Q.direct) html='<div class="hint">검색 결과가 없어요. 티커를 영문으로 입력해 보세요.</div>';
-  el.innerHTML=html;
+  if(!Q.items.length && !Q.direct) html=document.getElementById("symIn").value.trim()?'<div class="hint">검색 결과가 없어요. 티커를 영문으로 입력해 보세요.</div>':'';
+  el.innerHTML=html; el.style.display=html?"block":"none";
 }
 function resultRow(sym,name,ex,i){
   var added=S.tickers.indexOf(sym)>=0, busy=!!pend[sym];
@@ -1716,7 +1744,6 @@ function resultRow(sym,name,ex,i){
 function onDropClick(e){
   var b;
   if((b=e.target.closest("[data-add]"))){ addTicker(b.getAttribute("data-add")); return; }
-  if((b=e.target.closest("[data-addcat]"))){ S.addCat=b.getAttribute("data-addcat"); save(); renderCatPick(); return; }
 }
 
 /* ═════════════ 동작 ═════════════ */
