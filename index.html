@@ -340,6 +340,10 @@ details.legend p{margin:10px 0 0}
 .sws{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px}
 .sw{aspect-ratio:1;border-radius:50%;border:0;background:var(--c);position:relative;padding:0}
 .sw:active{transform:scale(.9)}
+.sw.none,.csw.none{background:repeating-conic-gradient(#c9ccd3 0 25%,#fff 0 50%) 50%/10px 10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.sw.none.on::after{color:#333;text-shadow:none}
+.csw{width:40px;height:34px;border-radius:10px;border:0;padding:0;background:var(--c);box-shadow:inset 0 0 0 1px rgba(128,128,128,.28)}
+.csw:active{transform:scale(.94)}
 .sw.on::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 
 .toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,30px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
@@ -490,7 +494,12 @@ var MET = {}; METRICS.forEach(function(m){ MET[m.id]=m; });
 var GEN_COLORS = ["#8b95ab","#6ea8fe","#4f8cff","#8b7bff","#c084fc"];   // 위험 지표가 아닌 지표의 기본 5단계 색
 
 /* 검색창에 미리 들어 있는 인기 종목: [티커, 영문 이름, 한글 이름, ETF면 "e"] */
+var INDEX_ALIAS = {SPX:"^GSPC",GSPC:"^GSPC",SP500:"^GSPC",IXIC:"^IXIC",COMP:"^IXIC",NASDAQ:"^IXIC",NDX:"^NDX",DJI:"^DJI",DJIA:"^DJI",VIX:"^VIX",RUT:"^RUT",SOX:"^SOX"};
+function disp(sym){ return sym.charAt(0)==="^" ? sym.slice(1).replace("GSPC","SPX") : sym; }
 var POP = [
+  ["^GSPC","S&P 500 Index (SPX)","에스앤피500 지수 스파이 에스피엑스","e"],["^IXIC","NASDAQ Composite Index (IXIC)","나스닥 종합지수 아이엑스아이씨","e"],
+  ["^NDX","NASDAQ 100 Index (NDX)","나스닥100 지수","e"],["^DJI","Dow Jones Industrial Average (DJI)","다우존스 지수","e"],
+  ["^RUT","Russell 2000 Index (RUT)","러셀2000 지수","e"],["^VIX","CBOE Volatility Index (VIX)","공포지수 변동성","e"],["^SOX","PHLX Semiconductor Index (SOX)","필라델피아 반도체지수","e"],
   ["SPY","SPDR S&P 500 ETF","에스앤피500 스파이","e"],["QQQ","Invesco QQQ (나스닥100)","나스닥100 큐큐큐","e"],
   ["DIA","SPDR Dow Jones ETF","다우존스","e"],["IWM","iShares Russell 2000 ETF","러셀2000","e"],
   ["VOO","Vanguard S&P 500 ETF","뱅가드 에스앤피","e"],["VTI","Vanguard Total Market ETF","토탈마켓","e"],
@@ -807,10 +816,15 @@ function haptic(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e)
 
 /* 지표 값 → 단계 → 색 */
 function tierFor(mid, v){ var m=MET[mid], c=S.mx[mid].cuts; return m.asc ? tierAsc(v,c) : tierDesc(v,c); }
-function colorOf(mid, t){
-  var c=S.mx[mid].colors[t]; if(c) return c;
-  return MET[mid].risk ? "var(--s"+t+")" : GEN_COLORS[t];
+var RISK_DEF = [null,"var(--s0)","var(--s1)","var(--s2)","var(--s3)"];   // 평온=색 없음, 주의=초록, 경계=노랑, 위험=주황, 공포=빨강
+var TIER_COLORS = [["none","색 없음"],["#e5484d","빨강"],["#f76b15","주황"],["#ffb224","호박"],["#f5d90a","노랑"],["#99d52a","연두"],["#30a46c","초록"],
+  ["#12a594","청록"],["#00a2c7","시안"],["#3b9cf5","하늘"],["#3e63dd","파랑"],["#5b5bd6","남색"],["#8e4ec6","보라"],["#ab4aba","자주"],["#e93d82","분홍"],
+  ["#a18072","갈색"],["#8b8d98","회색"],["#687076","진회색"]];
+function colorOf(mid, t){          // 색이 없으면(투명) null
+  var c=S.mx[mid].colors[t]; if(c==="none") return null; if(c) return c;
+  return MET[mid].risk ? RISK_DEF[t] : GEN_COLORS[t];
 }
+function colorOr(mid,t,fb){ var c=colorOf(mid,t); return c||fb; }
 function tierNames(mid){ return MET[mid].risk ? TIER_NAMES : ["1단계","2단계","3단계","4단계","5단계"]; }
 function mddTier(a){ return tierFor("mdd", -a.cur*100); }
 function probTier(a){ return tierFor("prob", a.prob); }
@@ -927,7 +941,7 @@ function headHtml(){
   }).join("");
 }
 function avatar(sym){
-  var h=hash(sym)%360, letter=esc(sym.replace(/[^A-Z0-9]/g,"").slice(0,2)||"?");
+  var h=hash(sym)%360, letter=esc(disp(sym).replace(/[^A-Z0-9]/g,"").slice(0,2)||"?");
   return '<span class="av" style="--h:'+h+'"><b>'+letter+'</b>'+
     '<img alt="" loading="lazy" referrerpolicy="no-referrer" src="https://financialmodelingprep.com/image-stock/'+encodeURIComponent(sym)+'.png" onload="this.classList.add(\'ok\')" onerror="this.remove()"></span>';
 }
@@ -935,11 +949,13 @@ function avatar(sym){
 function cell(mid, v, text, cls){
   if(v==null) return '<span class="dash'+(cls?' '+cls:'')+'">–</span>';
   if(!S.mx[mid].on) return '<span class="num'+(cls?' '+cls:'')+'">'+text+'</span>';
-  return '<span><span class="chip num" style="--c:'+colorOf(mid,tierFor(mid,v))+'">'+text+'</span></span>';
+  var cc=colorOf(mid,tierFor(mid,v));
+  if(!cc) return '<span class="num'+(cls?' '+cls:'')+'">'+text+'</span>';
+  return '<span><span class="chip num" style="--c:'+cc+'">'+text+'</span></span>';
 }
 function rowHtml(sym){
   var cc=ccAttr(sym);
-  var s=store[sym], a=A(sym), tk='<span class="c-t">'+avatar(sym)+'<span class="tk">'+esc(sym)+'</span></span>';
+  var s=store[sym], a=A(sym), tk='<span class="c-t">'+avatar(sym)+'<span class="tk">'+esc(disp(sym))+'</span></span>';
   if(loading[sym] && !s) return '<div class="rw sk'+cc.cls+'" data-sym="'+esc(sym)+'"'+cc.st+'><div class="grid">'+tk+'<span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div>';
   var cells;
   if(!a){
@@ -965,11 +981,11 @@ function catChips(sym){
   return '<div class="catrow"><div class="k2">카테고리 (끌어서 옮길 수도 있어요)</div><div class="chips">'+chips+'</div></div>';
 }
 function metricBox(mid, label, valueHtml, t){
-  var on=S.mx[mid].on, col=on?colorOf(mid,t):"var(--text)";
+  var on=S.mx[mid].on, col=on?colorOr(mid,t,"var(--text)"):"var(--text)";
   return '<div class="mb" style="--c:'+col+'"><div class="k">'+label+(on?'<i>'+TIER_NAMES[t]+'</i>':'')+'</div><div class="v num">'+valueHtml+'</div></div>';
 }
 function miniBox(mid,label,val,html){
-  var on=S.mx[mid].on&&val!=null, t=on?tierFor(mid,val):0, col=on?colorOf(mid,t):"var(--text)";
+  var on=S.mx[mid].on&&val!=null, t=on?tierFor(mid,val):0, col=on?colorOr(mid,t,"var(--text)"):"var(--text)";
   return '<div class="mb" style="--c:'+col+'"><div class="k">'+label+(on?'<i>'+TIER_NAMES[t]+'</i>':'')+'</div><div class="v num">'+(val==null?'–':html)+'</div></div>';
 }
 function extraBoxes(a){
@@ -986,10 +1002,10 @@ function detailHtml(sym){
   }
   var tm=mddTier(a), tp=probTier(a);
   var lad=a.ladder.map(function(l){
-    var col=S.mx.prob.on ? colorOf("prob",tierFor("prob",l.pct)) : "var(--accent)";
+    var col=S.mx.prob.on ? colorOr("prob",tierFor("prob",l.pct),"var(--muted)") : "var(--accent)";
     return '<div class="lad" style="--c:'+col+'"><span class="num">'+Math.round(l.lv*100)+'% 이상 하락</span><div class="bar2"><i style="width:'+Math.min(100,l.pct).toFixed(1)+'%"></i></div><span class="p num" style="color:'+(l.pct<0.05?'var(--muted)':'var(--c)')+'">'+probStr(l.pct)+'%</span></div>';
   }).join("");
-  var cap=capStr(s.cap), chartCol=S.mx.mdd.on?colorOf("mdd",tm):"var(--accent)";
+  var cap=capStr(s.cap), chartCol=S.mx.mdd.on?colorOr("mdd",tm,"var(--muted)"):"var(--accent)";
   return '<div class="dh"><b>'+esc(s.name)+'</b><span class="num">'+S.year+'년~ 기준</span></div>'+
     '<div class="mbs">'+
       metricBox("mdd","MDD",pctStr(a.cur*100)+'<small>%</small>',tm)+
@@ -1067,7 +1083,7 @@ function rangeLabel(mid,i){
 }
 function legendHtml(){
   var scales=METRICS.filter(function(m){ return S.mx[m.id].on; }).map(function(m){
-    var chips=""; for(var i=0;i<5;i++) chips+='<span style="--c:'+colorOf(m.id,i)+'">'+rangeLabel(m.id,i)+'</span>';
+    var chips=""; for(var i=0;i<5;i++) chips+='<span style="--c:'+colorOr(m.id,i,"var(--muted)")+'">'+rangeLabel(m.id,i)+'</span>';
     return '<div class="scale"><b style="color:var(--text);font-size:11.5px;margin-right:2px">'+m.name+'</b>'+chips+'</div>';
   }).join("");
   return '<summary>용어와 사용법</summary>'+
@@ -1439,7 +1455,7 @@ var dlgBtns=[], dlgSw=null;
 function showDlg(o){
   dlgBtns=o.buttons||[]; dlgSw=o.swatches?o.swatches.fn:null;
   var html='<h4>'+esc(o.title||"")+'</h4>'+(o.msg?'<p>'+esc(o.msg)+'</p>':'')+
-    (o.swatches?'<div class="sws">'+o.swatches.colors.map(function(c){ return '<button class="sw'+(c[0]===o.swatches.cur?' on':'')+'" data-sw="'+c[0]+'" style="--c:'+c[0]+'" aria-label="'+c[1]+'"></button>'; }).join("")+'</div>':'')+
+    (o.swatches?'<div class="sws">'+o.swatches.colors.map(function(c){ return '<button class="sw'+(c[0]===o.swatches.cur?' on':'')+(c[0]==="none"?' none':'')+'" data-sw="'+c[0]+'" style="--c:'+c[0]+'" aria-label="'+c[1]+'"></button>'; }).join("")+'</div>':'')+
     (o.input?'<input id="dlgIn" type="'+(o.input.password?'password':'text')+'" maxlength="'+(o.input.max||12)+'" autocomplete="off" placeholder="'+esc(o.input.placeholder||"")+'" value="'+esc(o.input.value||"")+'">':'')+
     (o.ta?'<textarea id="dlgTa" spellcheck="false"'+(o.ta.readonly?' readonly':'')+' placeholder="'+esc(o.ta.placeholder||"")+'">'+esc(o.ta.value||"")+'</textarea>':'')+
     '<div class="dlga'+(o.vertical?' v':'')+'">'+dlgBtns.map(function(b,i){
@@ -1515,7 +1531,7 @@ function mChipsHtml(){
 function mBoxHtml(){
   var m=MET[setM], x=S.mx[setM], names=tierNames(setM), rows="";
   for(var i=0;i<5;i++){
-    rows+='<div class="cr"><input type="color" value="'+hexOf(setM,i)+'" data-cm="'+m.id+'" data-ci="'+i+'" aria-label="'+names[i]+' 색"><span class="tn">'+names[i]+'</span><span class="rg">'+mRange(setM,i)+'</span></div>';
+    rows+='<div class="cr"><button class="csw'+(colorOf(setM,i)?'':' none')+'" data-pick="'+m.id+':'+i+'" style="--c:'+(colorOf(setM,i)||'transparent')+'" aria-label="'+names[i]+' 색 고르기"></button><span class="tn">'+names[i]+'</span><span class="rg">'+mRange(setM,i)+'</span></div>';
   }
   return '<div class="rowset" style="margin-top:10px"><span>'+m.name+' 색상 적용</span><button class="switch" data-mon="'+m.id+'" role="switch" aria-checked="'+x.on+'" aria-label="'+m.name+' 색상 적용"></button></div>'+
     '<div class="fold'+(x.on?' open':'')+'"><div class="foldin">'+rows+'<div style="text-align:right;margin-top:4px"><button class="reset" data-mreset="'+m.id+'">'+m.name+' 기본값으로</button></div></div></div>';
@@ -1629,8 +1645,7 @@ function initDial(){
 
 function onSettingsInput(e){
   var t=e.target;
-  if(t.hasAttribute("data-cm")){            // 색: 바꾸는 즉시 반영
-    S.mx[t.getAttribute("data-cm")].colors[+t.getAttribute("data-ci")]=t.value; save(); render();
+  if(false){
 
   } else if(t.id==="accIn"){ S.accent=t.value; applyStyle(); save(); }
 }
@@ -1655,6 +1670,11 @@ function onSettingsClick(e){
   if(t.closest("#catToggle")){ if(S.useCats){ S.useCats=false; } else { enableCats(); } save(); render(); refreshSettings(); return; }
   if((b=t.closest("[data-sch]"))){ S.scheme=b.getAttribute("data-sch"); if(!S.edit) lsSet("mdd.vscheme",S.scheme); save(); render(); refreshSettings(); return; }
   if((b=t.closest("[data-layout]"))){ S.catLayout=b.getAttribute("data-layout"); save(); render(); fadeRows(); refreshSettings(); return; }
+  if((b=t.closest("[data-pick]"))){
+    var pk=b.getAttribute("data-pick").split(":"), pm=pk[0], pi=+pk[1], cur=S.mx[pm].colors[pi]||null;
+    showDlg({title:MET[pm].name+" · "+tierNames(pm)[pi]+" 색",swatches:{colors:TIER_COLORS,cur:cur,fn:function(c){ S.mx[pm].colors[pi]=c; save(); render(); refreshSettings(); }},buttons:[{label:"닫기"}]});
+    return;
+  }
   if((b=t.closest("[data-mchip]"))){
     setM=b.getAttribute("data-mchip");
     document.getElementById("mchips").innerHTML=mChipsHtml();
@@ -1711,7 +1731,7 @@ function runLocal(){
   local.forEach(function(x){ seen[x.sym]=1; });
   Q.remote.forEach(function(x){ if(!seen[x.sym] && local.length<6){ local.push(x); seen[x.sym]=1; } });
   Q.items=local; Q.label="";
-  var cand=q.toUpperCase().replace(/\s+/g,"");
+  var cand=q.toUpperCase().replace(/\s+/g,""); if(INDEX_ALIAS[cand]) cand=INDEX_ALIAS[cand];
   Q.direct = (/^[A-Z0-9.\-^=]{1,12}$/.test(cand) && !seen[cand]) ? cand : null;
   renderResults();
 }
@@ -1739,7 +1759,7 @@ function renderResults(){
 function resultRow(sym,name,ex,i){
   var added=S.tickers.indexOf(sym)>=0, busy=!!pend[sym];
   var btn = busy ? '<button class="addb pend" disabled>추가 중…</button>' : added ? '<button class="addb done" disabled>✓ 추가됨</button>' : '<button class="addb" data-add="'+esc(sym)+'">추가</button>';
-  return '<div class="sr" style="animation-delay:'+Math.min(i*28,300)+'ms">'+avatar(sym)+'<div class="mid"><div class="t1">'+esc(sym)+'</div><div class="t2">'+esc(name)+(ex&&ex!==name?' · '+esc(ex):'')+'</div></div>'+btn+'</div>';
+  return '<div class="sr" style="animation-delay:'+Math.min(i*28,300)+'ms">'+avatar(sym)+'<div class="mid"><div class="t1">'+esc(disp(sym))+'</div><div class="t2">'+esc(name)+(ex&&ex!==name?' · '+esc(ex):'')+'</div></div>'+btn+'</div>';
 }
 function onDropClick(e){
   var b;
@@ -1754,6 +1774,7 @@ function fetchTicker(sym){
 }
 function addTicker(raw){
   var sym=String(raw||"").trim().toUpperCase().replace(/\s+/g,"");
+  if(INDEX_ALIAS[sym]) sym=INDEX_ALIAS[sym];
   if(!/^[A-Z0-9.\-^=]{1,12}$/.test(sym)){ toast("티커 형식을 확인해 주세요 (예: AAPL)"); return; }
   if(S.tickers.indexOf(sym)>=0){ toast(sym+"은(는) 이미 있어요"); return; }
   S.tickers.push(sym);
