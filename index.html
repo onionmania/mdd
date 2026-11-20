@@ -63,6 +63,9 @@ button{cursor:pointer}
 
 /* header */
 .head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 8px 14px}
+.hl{display:flex;align-items:center;gap:10px;min-width:0}
+.src{font-size:10.5px;line-height:1.35;color:var(--muted);letter-spacing:-.02em;min-width:0;padding-top:2px}
+.src b{display:block;font-weight:600;color:var(--text);opacity:.8}
 .title{display:flex;align-items:center;gap:8px;font-size:22px;font-weight:800;letter-spacing:-.04em;margin:0}
 .logo{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:16px;line-height:1;
   background:color-mix(in srgb,var(--accent) 22%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
@@ -98,7 +101,7 @@ button{cursor:pointer}
 /* ───── 표 ───── */
 .tbl{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
 .grid{display:grid;align-items:center;column-gap:4px;padding:0 10px;
-  grid-template-columns:minmax(74px,1.5fr) minmax(40px,.8fr) minmax(46px,1fr) minmax(46px,1fr) minmax(54px,1.15fr) minmax(48px,1fr)}
+  grid-template-columns:minmax(64px,1.5fr) minmax(36px,.8fr) minmax(42px,1fr) minmax(42px,1fr) minmax(52px,1.15fr) minmax(46px,1fr)}
 .th{height:38px;border-bottom:1px solid var(--line);background:var(--surface)}
 .th button{border:0;background:none;padding:0;font-size:11.5px;font-weight:600;color:var(--muted);text-align:right;white-space:nowrap;height:38px}
 .th button:first-child{text-align:left}
@@ -409,12 +412,14 @@ details.legend p{margin:10px 0 0}
 [data-theme="brutal"] .dclone{border:2px solid #111}
 [data-theme="brutal"] .toast{border:2px solid #111;background:#ffe27a;color:#111}
 [data-theme="brutal"] .sdots,[data-theme="brutal"] .sec.droptgt .sech{color:#111}
+.chip.nc{color:var(--text);background:color-mix(in srgb,var(--text) 8%,transparent)}
+[data-theme="brutal"] .chip.nc{background:#efeadb;color:#111}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="head">
-    <h1 class="title"><span class="logo" aria-hidden="true">📉</span>MDD</h1>
+    <div class="hl"><h1 class="title"><span class="logo" aria-hidden="true">📉</span>MDD</h1><div class="src" id="srcInfo"></div></div>
     <div class="hbtns">
       <button class="gear" id="plusBtn" aria-label="종목 추가">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -950,7 +955,7 @@ function cell(mid, v, text, cls){
   if(v==null) return '<span class="dash'+(cls?' '+cls:'')+'">–</span>';
   if(!S.mx[mid].on) return '<span class="num'+(cls?' '+cls:'')+'">'+text+'</span>';
   var cc=colorOf(mid,tierFor(mid,v));
-  if(!cc) return '<span class="num'+(cls?' '+cls:'')+'">'+text+'</span>';
+  if(!cc) return '<span><span class="chip nc num">'+text+'</span></span>';
   return '<span><span class="chip num" style="--c:'+cc+'">'+text+'</span></span>';
 }
 function rowHtml(sym){
@@ -1143,11 +1148,19 @@ function render(){
   document.getElementById("rows").innerHTML=html;
   if(openSym && !rowEl(openSym)) openSym=null;
   document.getElementById("legend").innerHTML=legendHtml();
+  srcInfo();
 }
 function tabFade(){
   var el=document.getElementById("tabs");
   el.classList.toggle("fl",el.scrollLeft>4);
   el.classList.toggle("fr",el.scrollLeft+el.clientWidth<el.scrollWidth-4);
+}
+function srcInfo(){
+  var el=document.getElementById("srcInfo"); if(!el) return;
+  var last=0; S.tickers.forEach(function(sym){ var x=store[sym]; if(x&&x.t.length){ var d=x.t[x.t.length-1]; if(d>last) last=d; } });
+  if(!last){ el.innerHTML=S.tickers.length?"<b>데이터</b>불러오는 중…":""; return; }
+  var src=S.mode==="demo"?"샘플 데이터":"Yahoo Finance";
+  el.innerHTML="<b>"+src+"</b>"+shortDate(last)+" 종가";
 }
 function fadeRows(){ var r=document.getElementById("rows"); r.classList.remove("fade"); void r.offsetWidth; r.classList.add("fade"); }
 
@@ -1586,11 +1599,21 @@ function settingsHtml(){
     '<h3>화면 테마</h3><div class="themes">'+themeTiles()+'</div>'+schemeSeg()+
     catSettings()+metricSettings()+cloudSettings()+backupSettings();
 }
+/* 폰의 뒤로가기: 열려 있는 설정·검색창을 닫고 기본 화면으로 돌아와요 */
+var ovPushed={settings:false,drop:false};
+function pushOv(n){ if(ovPushed[n]) return; try{ history.pushState({mdd:n},""); ovPushed[n]=true; }catch(e){} }
+function leaveOv(n){ if(!ovPushed[n]) return; ovPushed[n]=false; try{ history.back(); }catch(e){} }
+window.addEventListener("popstate",function(){
+  ovPushed.settings=false; ovPushed.drop=false;
+  closeDlg(); rawCloseDrop(); rawCloseSettings();
+});
 function openSettings(){
+  pushOv("settings");
   document.getElementById("sheet").innerHTML=settingsHtml(); initDial(); updateSyncUi();
   document.getElementById("veil").classList.add("on"); document.getElementById("sheet").classList.add("on");
 }
-function closeSettings(){ document.getElementById("veil").classList.remove("on"); document.getElementById("sheet").classList.remove("on"); }
+function rawCloseSettings(){ document.getElementById("veil").classList.remove("on"); document.getElementById("sheet").classList.remove("on"); }
+function closeSettings(){ rawCloseSettings(); leaveOv("settings"); }
 function refreshSettings(){ var sh=document.getElementById("sheet"), top=sh.scrollTop; sh.innerHTML=settingsHtml(); initDial(); updateSyncUi(); sh.scrollTop=top; }
 function setYear(y){
   var max=new Date().getFullYear()-1; y=Math.max(FIRST_YEAR,Math.min(max,y));
@@ -1701,6 +1724,7 @@ function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; 
 /* ═════════════ 종목 검색 패널 ═════════════ */
 var Q = {timer:null, seq:0, items:[], label:"", direct:null, remote:[]};
 function openDrop(){
+  pushOv("drop");
   S.addCat=(catsActive()&&S.tab!=="_all"&&S.tab!=="_none")?S.tab:"_none";
   var inp=document.getElementById("symIn"); inp.value="";
   inp.placeholder=(S.addCat!=="_none"?"‘"+catName(S.addCat)+"’에 추가 · ":"")+"티커나 회사 이름";
@@ -1708,7 +1732,8 @@ function openDrop(){
   document.getElementById("veil2").classList.add("on"); document.getElementById("drop").classList.add("on");
   inp.focus();
 }
-function closeDrop(){
+function closeDrop(){ rawCloseDrop(); leaveOv("drop"); }
+function rawCloseDrop(){
   document.getElementById("veil2").classList.remove("on"); document.getElementById("drop").classList.remove("on");
   document.getElementById("symIn").blur();
 }
