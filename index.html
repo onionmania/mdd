@@ -29,10 +29,10 @@
   --shadow:0 10px 30px rgba(0,0,0,.35);
 }
 [data-theme="material"]{
-  --bg:#FEF7FF; --surface:#F7F2FA; --surface2:#ECE6F0; --line:#E2DCE8;
-  --text:#1D1B20; --muted:#6D6776; --accent:#6750A4; --onaccent:#FFFFFF;
+  --bg:#F9F9FF; --surface:#F0F3FA; --surface2:#E4E9F4; --line:#D9DFEB;
+  --text:#1A1C20; --muted:#5F6672; --accent:#0B57D0; --onaccent:#FFFFFF;
   --s0:#1B8A5A; --s1:#A97A00; --s2:#C75F00; --s3:#BA1A1A; --s4:#9C0A5B;
-  --shadow:0 1px 3px rgba(60,40,90,.14),0 4px 12px rgba(60,40,90,.06);
+  --shadow:0 1px 3px rgba(30,50,90,.14),0 4px 12px rgba(30,50,90,.06);
   --radius:28px;
 }
 [data-theme="glass"]{
@@ -49,8 +49,8 @@
   background-image:radial-gradient(rgba(0,0,0,.14) 1px,transparent 1px); background-size:16px 16px;
 }
 [data-theme="material"][data-scheme="dark"]{
-  --bg:#141218; --surface:#1D1B20; --surface2:#2B2930; --line:#36343B;
-  --text:#E6E0E9; --muted:#938F99; --accent:#D0BCFF; --onaccent:#381E72;
+  --bg:#111318; --surface:#1A1D23; --surface2:#272B33; --line:#343842;
+  --text:#E2E2E9; --muted:#8F939E; --accent:#A8C7FA; --onaccent:#062E6F;
   --s0:#34d3a0; --s1:#e8cb52; --s2:#f59a3d; --s3:#ff6b62; --s4:#ff4f9a;
   --shadow:0 1px 3px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.25);
 }
@@ -218,6 +218,19 @@ button{cursor:pointer}
 .mktp h4{margin:0 0 2px;font-size:13px}
 .mktp p{margin:0 0 6px;font-size:11.5px;line-height:1.5;color:var(--muted)}
 .mktp svg{display:block;width:100%;height:auto}
+.frt{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px;table-layout:fixed}
+.frt th{font-weight:600;color:var(--muted);font-size:11px;padding:5px 2px;text-align:center}
+.frt tbody th{text-align:left;width:19%;color:var(--text);font-size:11.5px}
+.frt td{text-align:center;padding:6px 2px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.frt tbody th{border-top:1px solid var(--line)}
+.frt td b{display:block;font-size:13px}
+.frt td b.up{color:var(--s0)} .frt td b.dn{color:var(--s3)}
+.frt td small{display:block;font-size:10px;color:var(--muted);margin-top:1px}
+.frt td.na{color:var(--muted)}
+.frt tr.sep th{text-align:left;font-size:10.5px;padding-top:10px;border-top:1px solid var(--line)}
+.frt tr.base td,.frt tr.base th{opacity:.8}
+.frt tr.base td b{font-size:12px;font-weight:600}
+.fwdn{font-size:10.5px;line-height:1.5;color:var(--muted);margin:8px 0 4px}
 .chart{margin-top:4px}
 .ctitle{font-size:11.5px;font-weight:700;margin-top:14px;display:flex;justify-content:space-between;align-items:baseline}
 .ctitle span{font-weight:500;color:var(--muted);font-size:10.5px}
@@ -384,9 +397,9 @@ details.legend p{margin:10px 0 0}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
 /* ───── 머티리얼 3 ───── */
-[data-theme="material"] .tab.on{background:#E8DEF8;color:#1D192B}
-[data-theme="material"] :is(.gear,.cbtn){background:#F3EDF7;border-color:transparent}
-[data-theme="material"] .tab{background:transparent;border-color:#CAC4D0;color:#49454F}
+[data-theme="material"] .tab.on{background:#D3E3FD;color:#041E49}
+[data-theme="material"] :is(.gear,.cbtn){background:#E9EEF8;border-color:transparent}
+[data-theme="material"] .tab{background:transparent;border-color:#C3CAD9;color:#43474E}
 [data-theme="material"] .tab.on{border-color:transparent}
 [data-theme="material"] .tbl{border-color:transparent}
 
@@ -411,12 +424,14 @@ details.legend p{margin:10px 0 0}
 [data-theme="glass"] .dclone{background:rgba(44,52,92,.9)}
 [data-theme="glass"] .sech{background:rgba(255,255,255,.08)}
 
-[data-theme="material"][data-scheme="dark"] .tab{border-color:#49454F;color:#CAC4D0}
-[data-theme="material"][data-scheme="dark"] .tab.on{background:#4A4458;color:#E8DEF8}
-[data-theme="material"][data-scheme="dark"] :is(.gear,.cbtn){background:#2B2930}
+[data-theme="material"][data-scheme="dark"] .tab{border-color:#44474F;color:#C4C6D0}
+[data-theme="material"][data-scheme="dark"] .tab.on{background:#1F3C6E;color:#D3E3FD}
+[data-theme="material"][data-scheme="dark"] :is(.gear,.cbtn){background:#272B33}
 [data-theme="glass"][data-scheme="light"] body::before{background:radial-gradient(52% 34% at 14% 10%,rgba(120,140,255,.75),transparent 68%),radial-gradient(48% 32% at 92% 24%,rgba(255,120,190,.6),transparent 68%),radial-gradient(56% 38% at 72% 64%,rgba(60,215,205,.5),transparent 68%),radial-gradient(46% 34% at 8% 84%,rgba(255,185,110,.55),transparent 68%),linear-gradient(165deg,#e9eeff,#f6ecfb 55%,#e6f6f6)}
 [data-theme="glass"][data-scheme="light"] :is(.tbl,details.legend){background:linear-gradient(140deg,rgba(255,255,255,.72),rgba(255,255,255,.34) 55%,rgba(255,255,255,.55));border-color:rgba(255,255,255,.9)}
 [data-theme="glass"][data-scheme="light"] :is(.gear,.cbtn,.tab,.srch,.logo){background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.9)}
+[data-theme="glass"] .tab.on{background:rgba(255,255,255,.28);color:var(--text);border-color:rgba(255,255,255,.55);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+[data-theme="glass"][data-scheme="light"] .tab.on{background:rgba(255,255,255,.96);color:#141a33;border-color:var(--accent);box-shadow:0 2px 10px rgba(60,80,170,.2)}
 [data-theme="glass"][data-scheme="light"] .stat{background:rgba(255,255,255,.5);border-color:rgba(255,255,255,.8)}
 [data-theme="glass"][data-scheme="light"] .rw.open>.rr{background:rgba(255,255,255,.45)}
 [data-theme="glass"][data-scheme="light"] :is(.tbl,.gear,.cbtn,details.legend,.tab){box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
@@ -530,7 +545,7 @@ function cacheFresh(c){
 }
 var THEMES = [
   {id:"midnight", name:"미드나이트", d:"트레이딩 앱", pv:["#0b0e14","#131824","#7c9cff"]},
-  {id:"material", name:"머티리얼 3", d:"구글 기본",   pv:["#FEF7FF","#ECE6F0","#6750A4"]},
+  {id:"material", name:"머티리얼 3", d:"구글 기본",   pv:["#F9F9FF","#E4E9F4","#0B57D0"]},
   {id:"glass",    name:"리퀴드 글래스", d:"유리 질감",   pv:["#0a0e1f","#4a5bd8","#ff5fa2"]},
   {id:"brutal",   name:"브루탈",     d:"굵은 테두리", pv:["#f2ede0","#ffe27a","#ff5b3a"]}
 ];
@@ -906,11 +921,12 @@ function drawDD(a, o){
   var iw=W-padL-padR, ih=H-padT-padB;
   function X(i){ return padL+iw*(i/(a.n-1)); }
   function Y(v){ return padT+ih*(-v/range); }
+  /* 구간마다 가장 깊은 점과 가장 높은 점(신고가면 0)을 시간 순서대로 모두 그려서, 신고가가 0선에 닿아요 */
   var buckets=Math.min(a.n, o.points||160), pts=[];
   for(var b=0;b<buckets;b++){
-    var s0=Math.floor(b*a.n/buckets), s1=Math.floor((b+1)*a.n/buckets), mn=0, mi=s0;
-    for(var i=s0;i<Math.max(s1,s0+1);i++){ if(a.dd[i]<=mn){ mn=a.dd[i]; mi=i; } }
-    pts.push([X(mi),Y(mn)]);
+    var s0=Math.floor(b*a.n/buckets), s1=Math.max(Math.floor((b+1)*a.n/buckets),s0+1), mn=Infinity, mi=s0, mx=-Infinity, xi=s0;
+    for(var i=s0;i<s1;i++){ if(a.dd[i]<mn){ mn=a.dd[i]; mi=i; } if(a.dd[i]>=mx){ mx=a.dd[i]; xi=i; } }
+    if(mi<xi){ pts.push([X(mi),Y(mn)]); pts.push([X(xi),Y(mx)]); } else { pts.push([X(xi),Y(mx)]); if(mi!==xi) pts.push([X(mi),Y(mn)]); }
   }
   pts.push([X(a.n-1),Y(a.dd[a.n-1])]);
   var line=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");
@@ -962,11 +978,12 @@ function drawPrice(a,o){
   var step=niceStep((ymax-ymin)/3.5), tickStart=Math.ceil(ymin/step)*step;
   function X(i){ return padL+iw*(i/(n-1)); }
   function Y(v){ return padT+ih*(1-(v-ymin)/(ymax-ymin)); }
-  var buckets=Math.min(n,o.points||160), pts=[], pk=[], run=-Infinity, kk=0;
+  var buckets=Math.min(n,o.points||160), pts=[], pk=[], run=-Infinity;
   for(var b=0;b<buckets;b++){
-    var e=Math.floor((b+1)*n/buckets)-1; if(e<0) e=0;
-    while(kk<=e){ if(a.c[base+kk]>run) run=a.c[base+kk]; kk++; }
-    pts.push([X(e),Y(a.c[base+e])]); pk.push([X(e),Y(run)]);
+    var q0=Math.floor(b*n/buckets), q1=Math.max(Math.floor((b+1)*n/buckets),q0+1), mn=Infinity, mi=q0, mx=-Infinity, xi=q0;
+    for(var q=q0;q<q1;q++){ var cv=a.c[base+q]; if(cv<mn){ mn=cv; mi=q; } if(cv>=mx){ mx=cv; xi=q; } if(cv>run) run=cv; }
+    if(mi<xi){ pts.push([X(mi),Y(mn)]); pts.push([X(xi),Y(mx)]); } else { pts.push([X(xi),Y(mx)]); if(mi!==xi) pts.push([X(mi),Y(mn)]); }
+    pk.push([X(q1-1),Y(run)]);
   }
   var line=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");
   var pkl=pk.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");
@@ -1301,7 +1318,7 @@ var MKT=[
   {id:"vix", name:"VIX", sym:"^VIX",
    title:"VIX 변동성 지수", desc:"S&P 500 옵션이 예상하는 앞으로 30일의 변동성이에요. 높을수록 시장이 불안하다는 뜻이에요."},
   {id:"move",name:"MOVE", sym:"^MOVE",
-   title:"MOVE 채권 변동성 지수", desc:"미국 국채 금리의 예상 변동성이에요. 채권 시장의 VIX로 불려요."}
+   title:"MOVE 채권 변동성 지수", desc:"미국 국채 금리의 예상 변동성이에요. 채권 시장의 VIX로 불려요. 높을수록 시장이 불안하다는 뜻이에요."}
 ];
 var mkt={}, mktOpen=null;
 var CNN_URL="https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
@@ -1312,6 +1329,7 @@ function mktDemo(){
     h[n-1]=v; h[n-2]=prev; return {v:v,prev:prev,hist:h,ts:ts};
   }
   mkt.fg=mk(50,22,38,35); mkt.vix=mk(19,5,21.4,20.6); mkt.move=mk(100,14,96.2,98.1);
+  mkt.idx={gspc:demoSeries("^GSPC"),ixic:demoSeries("^IXIC")};
 }
 function mktFromSeries(s){
   var n=s.c.length, st=0, d0=Date.UTC(S.year,0,1)/86400000;
@@ -1321,7 +1339,9 @@ function mktFromSeries(s){
 function fetchFG(){
   var start=Math.max(S.year,2011)+"-01-01";
   function get(u){ return getJson(API_BASE+"/y?u="+encodeURIComponent(u),20000); }
-  return get(CNN_URL+"/"+start).catch(function(){ return get(CNN_URL); }).then(function(j){
+  function ok(j){ var h=j&&j.fear_and_greed_historical&&j.fear_and_greed_historical.data; if(!h||!h.length||!j.fear_and_greed) throw new Error("fg"); return j; }
+  /* CNN이 오래된 날짜를 거절할 수 있어서, 안 되면 더 늦은 날짜 → 기본(최근 1년) 순서로 시도해요 */
+  return get(CNN_URL+"/"+start).then(ok).catch(function(){ return get(CNN_URL+"/2020-07-15").then(ok); }).catch(function(){ return get(CNN_URL); }).then(function(j){
     var f=j&&j.fear_and_greed, hh=(j&&j.fear_and_greed_historical&&j.fear_and_greed_historical.data)||[];
     if(!f||typeof f.score!=="number") throw new Error("fg");
     var t0=Date.UTC(S.year,0,1);   /* 기준 시작 연도 1월 1일 이전 값은 버려요 */
@@ -1333,6 +1353,8 @@ function fetchFG(){
 function loadMkt(force){
   if(S.mode==="demo"||!API_BASE){ mktDemo(); mktRender(); return; }
   var jobs=[["fg",fetchFG()],["vix",loadSeries("^VIX",force).then(mktFromSeries)],["move",loadSeries("^MOVE",force).then(mktFromSeries)]];
+  loadSeries("^GSPC",force).then(function(x){ mkt.idx=mkt.idx||{}; mkt.idx.gspc=x; mktRender(); }).catch(function(){});
+  loadSeries("^IXIC",force).then(function(x){ mkt.idx=mkt.idx||{}; mkt.idx.ixic=x; mktRender(); }).catch(function(){});
   jobs.forEach(function(jb){
     jb[1].then(function(r){ mkt[jb[0]]=r; if(jb[0]==="fg"){ try{ localStorage.setItem("mdd.m.fg",JSON.stringify(r)); }catch(e){} } mktRender(); })
       .catch(function(){ if(!mkt[jb[0]]&&jb[0]==="fg"){ try{ var c=localStorage.getItem("mdd.m.fg"); if(c) mkt.fg=JSON.parse(c); }catch(e){} } mktRender(); });
@@ -1346,6 +1368,57 @@ function mktBoxes(){
     var dtxt=d==null?"":(d>=0?"▲ ":"▼ ")+Math.abs(d).toFixed(1);
     return '<button class="mb'+(mktOpen===m.id?' on':'')+'" data-mk="'+m.id+'" style="--c:'+col+'"><div class="k">'+m.name+(on?'<i>'+tierNames(m.id)[t]+'</i>':'')+'</div><div class="v num">'+r.v.toFixed(m.id==="fg"?0:1)+'</div><div class="sub num">'+dtxt+'</div></button>';
   }).join("");
+}
+/* ── 지금과 같은 단계였던 날 이후의 S&P 500·나스닥 수익률 ── */
+var FWD=[[1,"1개월"],[3,"3개월"],[6,"6개월"],[12,"12개월"]], fwdCache={};
+function lowerBound(t,d){ var lo=0,hi=t.length; while(lo<hi){ var m=(lo+hi)>>1; if(t[m]<d) lo=m+1; else hi=m; } return lo; }
+function fwdStats(days, ser){
+  /* days: 기준일(일 단위 숫자) 목록 → 지수별·기간별 수익률 목록 */
+  var out=FWD.map(function(){ return []; }), t=ser.t, c=ser.c, last=t[t.length-1];
+  days.forEach(function(d){
+    var i=lowerBound(t,d); if(i>=t.length||t[i]-d>5) return;
+    var p0=c[i], dt=new Date(d*86400000);
+    FWD.forEach(function(f,k){
+      var tg=Date.UTC(dt.getUTCFullYear(),dt.getUTCMonth()+f[0],dt.getUTCDate())/86400000;
+      if(tg>last) return;
+      var j=lowerBound(t,tg+1)-1; if(j<0) return;
+      out[k].push(c[j]/p0-1);
+    });
+  });
+  return out;
+}
+function fwdAgg(arr){ var n=arr.length; if(n<8) return null; var sm=0,w=0; arr.forEach(function(v){ sm+=v; if(v>0) w++; }); return {avg:sm/n*100, win:w/n*100, n:n}; }
+function fwdCell(a,withWin){
+  if(!a) return '<td class="na">–</td>';
+  var cl=a.avg>=0?"up":"dn", tx=(a.avg>=0?"+":"−")+Math.abs(a.avg).toFixed(1)+"%";
+  return '<td><b class="'+cl+'">'+tx+'</b>'+(withWin?'<small>상승 '+Math.round(a.win)+'%</small>':'')+'</td>';
+}
+function mktFwdHtml(m,r){
+  var ix=mkt.idx; if(!ix||!ix.gspc||!ix.ixic) return '<div class="fwdn">지수 데이터를 불러오는 중이에요…</div>';
+  var v=mktView(r), key=[m.id,r.v,S.year,v.ts.length,ix.gspc.t.length,ix.ixic.t.length].join("|");
+  var res=fwdCache[key];
+  if(!res){
+    /* 지금 값 그대로 비교: 지금 값 ± 일정 폭 안이었던 날을 모아요. 날이 너무 적으면 폭을 조금씩 넓혀요. */
+    var all=[], hit=[], hw=m.id==="fg"?4:r.v*0.1, lo, hi, tries=0;
+    for(var i=0;i<v.hist.length;i++) all.push(Math.floor(v.ts[i]/86400000));
+    do{
+      lo=r.v-hw; hi=r.v+hw; hit=[];
+      for(var i2=0;i2<v.hist.length;i2++){ if(v.hist[i2]>=lo && v.hist[i2]<=hi) hit.push(all[i2]); }
+      hw*=1.25; tries++;
+    } while(hit.length<60 && tries<6);
+    res={lo:lo,hi:hi,n:hit.length, sp:fwdStats(hit,ix.gspc).map(fwdAgg), nq:fwdStats(hit,ix.ixic).map(fwdAgg), spA:fwdStats(all,ix.gspc).map(fwdAgg), nqA:fwdStats(all,ix.ixic).map(fwdAgg)};
+    fwdCache[key]=res;
+  }
+  var head='<tr><th></th>'+FWD.map(function(f){ return '<th>'+f[1]+'</th>'; }).join("")+'</tr>';
+  function row(lbl,arr,w,cls){ return '<tr class="'+(cls||"")+'"><th>'+lbl+'</th>'+arr.map(function(a){ return fwdCell(a,w); }).join("")+'</tr>'; }
+  var dg=m.id==="fg"?0:1, fm=function(x){ return Math.max(0,x).toFixed(dg); };
+  return '<div class="ctitle" style="margin-top:12px">지금('+r.v.toFixed(dg)+')과 비슷한 값('+fm(res.lo)+' ~ '+fm(res.hi)+')이었던 날 이후의 수익률</div>'+
+    '<table class="frt"><thead>'+head+'</thead><tbody>'+
+    row("S&P 500",res.sp,true)+row("나스닥",res.nq,true)+
+    '<tr class="sep"><th colspan="5">비교 · 전체 기간 평균</th></tr>'+
+    row("S&P 500",res.spA,false,"base")+row("나스닥",res.nqA,false,"base")+
+    '</tbody></table>'+
+    '<div class="fwdn">'+S.year+'년 이후 그 값 범위였던 날 '+res.n+'일 기준이에요. 지수 가격 기준(배당 제외)이고, 연속된 날이 많아 서로 겹치는 기간이라 참고용으로만 봐 주세요.'+(res.n<8?' 날짜 수가 너무 적으면 –로 나와요.':'')+'</div>';
 }
 function mktView(r){   /* 기준 시작 연도 1월 1일부터의 값만 */
   var t0=Date.UTC(S.year,0,1), k=0; while(k<r.ts.length-1 && r.ts[k]<t0) k++;
@@ -1374,7 +1447,7 @@ function mktRender(){
   var fo=document.getElementById("mktFold"), pn=document.getElementById("mktPanel");
   var m=MKT.filter(function(x){ return x.id===mktOpen; })[0], r=m&&mkt[m.id];
   if(m&&r){
-    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+'</p>'+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"));
+    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+'</p>'+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"))+mktFwdHtml(m,r);
     fo.classList.add("open");
   } else if(!m) fo.classList.remove("open");
 }
@@ -1738,7 +1811,7 @@ function themeTiles(){
   var sc=null; if(DUAL[S.theme]) sc=schemeOf();
   return THEMES.map(function(t){
     var pv=t.pv;
-    if(t.id==="material" && sc==="dark" && S.theme==="material") pv=["#141218","#2B2930","#D0BCFF"];
+    if(t.id==="material" && sc==="dark" && S.theme==="material") pv=["#111318","#272B33","#A8C7FA"];
     if(t.id==="glass" && sc==="light" && S.theme==="glass") pv=["#eef1fb","#9fb0ff","#ff8fc0"];
     return '<button class="th-b" data-theme-id="'+t.id+'" aria-pressed="'+(S.theme===t.id)+'"><div class="pv">'+pv.map(function(c){return '<i style="background:'+c+'"></i>';}).join("")+'</div>'+t.name+'<div class="th-d">'+t.d+'</div></button>';
   }).join("");
