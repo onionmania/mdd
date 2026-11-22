@@ -208,6 +208,16 @@ button{cursor:pointer}
 .mb .v{font-size:25px;font-weight:700;margin-top:5px;line-height:1}
 .mb .v small{font-size:14px;font-weight:600;margin-left:1px}
 .chart svg{display:block;width:100%;height:auto}
+.mkt{margin:2px 0 10px}
+.mkt .mbs3{margin-top:0}
+.mkt .mb{cursor:pointer;text-align:left;font-family:inherit;width:100%;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.mkt .mb:active{transform:scale(.97)}
+.mkt .mb.on{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 55%,transparent)}
+.mkt .mb .sub{font-size:10.5px;font-weight:600;opacity:.8;margin-top:1px;min-height:14px}
+.mktp{margin-top:8px;border-radius:14px;padding:12px 12px 8px;background:var(--surface);border:1px solid var(--line)}
+.mktp h4{margin:0 0 2px;font-size:13px}
+.mktp p{margin:0 0 6px;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.mktp svg{display:block;width:100%;height:auto}
 .chart{margin-top:4px}
 .ctitle{font-size:11.5px;font-weight:700;margin-top:14px;display:flex;justify-content:space-between;align-items:baseline}
 .ctitle span{font-weight:500;color:var(--muted);font-size:10.5px}
@@ -460,6 +470,8 @@ details.legend p{margin:10px 0 0}
     </div>
   </header>
 
+  <div class="mkt" id="mkt"><div class="mbs mbs3" id="mktCards"></div><div class="fold" id="mktFold"><div class="foldin"><div class="mktp" id="mktPanel"></div></div></div></div>
+
   <div class="catbar" id="catbar"><div class="tabs" id="tabs"></div><div class="catact" id="catact"></div></div>
 
   <section class="tbl">
@@ -540,7 +552,10 @@ var METRICS = [
    desc:"확률이 낮을수록(드문 하락일수록) 위험해요. 구간 숫자는 위에서부터 차례로 작아져야 해요."},
   {id:"since", name:"고점 이후", unit:"일", asc:true,  def:[30,90,180,365], on:true, risk:true, desc:""},
   {id:"ma",    name:"200일선",   unit:"%", asc:false, def:[0,-5,-10,-20],  on:true, risk:true, neg:true, desc:""},
-  {id:"rsi",   name:"RSI",       unit:"",  asc:false, def:[50,40,30,20],   on:true, risk:true, desc:""}
+  {id:"rsi",   name:"RSI",       unit:"",  asc:false, def:[50,40,30,20],   on:true, risk:true, desc:""},
+  {id:"fg",    name:"공포탐욕",  unit:"",  asc:false, def:[75,55,45,25],   on:true, risk:true, desc:"", names:["극탐욕","탐욕","중립","공포","극공포"], defCol:["var(--s0)","var(--s0)",null,"var(--s2)","var(--s3)"]},
+  {id:"vix",   name:"VIX",       unit:"",  asc:true,  def:[15,20,30,40],   on:true, risk:true, desc:"", names:["안정","보통","경계","공포","극공포"], defCol:["var(--s0)",null,"var(--s1)","var(--s2)","var(--s3)"]},
+  {id:"move",  name:"MOVE",      unit:"",  asc:true,  def:[80,100,120,150],on:true, risk:true, desc:"", names:["안정","보통","경계","공포","극공포"], defCol:["var(--s0)",null,"var(--s1)","var(--s2)","var(--s3)"]}
 ];
 var MET = {}; METRICS.forEach(function(m){ MET[m.id]=m; });
 var GEN_COLORS = ["#8b95ab","#6ea8fe","#4f8cff","#8b7bff","#c084fc"];   // 위험 지표가 아닌 지표의 기본 5단계 색
@@ -874,10 +889,11 @@ var TIER_COLORS = [["none","색 없음"],["#e5484d","빨강"],["#f76b15","주황
   ["#a18072","갈색"],["#8b8d98","회색"],["#687076","진회색"]];
 function colorOf(mid, t){          // 색이 없으면(투명) null
   var c=S.mx[mid].colors[t]; if(c==="none") return null; if(c) return c;
+  if(MET[mid].defCol) return MET[mid].defCol[t];
   return MET[mid].risk ? RISK_DEF[t] : GEN_COLORS[t];
 }
 function colorOr(mid,t,fb){ var c=colorOf(mid,t); return c||fb; }
-function tierNames(mid){ return MET[mid].risk ? TIER_NAMES : ["1단계","2단계","3단계","4단계","5단계"]; }
+function tierNames(mid){ if(MET[mid].names) return MET[mid].names; return MET[mid].risk ? TIER_NAMES : ["1단계","2단계","3단계","4단계","5단계"]; }
 function mddTier(a){ return tierFor("mdd", -a.cur*100); }
 function probTier(a){ return tierFor("prob", a.prob); }
 
@@ -941,7 +957,9 @@ function drawPrice(a,o){
   var W=o.w,H=o.h,padL=o.padL,padR=o.padR,padT=o.padT,padB=o.padB, iw=W-padL-padR, ih=H-padT-padB, n=a.n, base=a.i0;
   var lo=Infinity, hi=-Infinity, k;
   for(k=0;k<n;k++){ var v=a.c[base+k]; if(v<lo) lo=v; if(v>hi) hi=v; }
-  var step=niceStep((hi-lo)/3||1), ymin=Math.floor(lo/step)*step, ymax=Math.ceil(hi/step)*step; if(ymax===ymin) ymax=ymin+step;
+  /* 세로 범위는 실제 최저~최고가에 약간의 여백만 둬요. 눈금은 그 안에 들어오는 '깔끔한 숫자'만 그려서 빈 공간이 생기지 않아요. */
+  var padv=(hi-lo)*.06||hi*.05||1, ymin=Math.max(0,lo-padv), ymax=hi+padv;
+  var step=niceStep((ymax-ymin)/3.5), tickStart=Math.ceil(ymin/step)*step;
   function X(i){ return padL+iw*(i/(n-1)); }
   function Y(v){ return padT+ih*(1-(v-ymin)/(ymax-ymin)); }
   var buckets=Math.min(n,o.points||160), pts=[], pk=[], run=-Infinity, kk=0;
@@ -955,7 +973,7 @@ function drawPrice(a,o){
   var area=line+" L"+X(n-1).toFixed(1)+","+(padT+ih)+" L"+padL+","+(padT+ih)+" Z";
   var id="p"+Math.random().toString(36).slice(2,8);
   var out='<svg viewBox="0 0 '+W+' '+H+'" style="color:var(--accent)"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".22"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>';
-  for(var g=ymin; g<=ymax+1e-9; g+=step){
+  for(var g=tickStart; g<=ymax+1e-9; g+=step){
     var gy=Y(g);
     out+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+gy.toFixed(1)+'" y2="'+gy.toFixed(1)+'" stroke="var(--line)" stroke-width="1"/>';
     out+='<text x="'+(W-padR+4)+'" y="'+(gy+3.5).toFixed(1)+'" font-size="10" fill="var(--muted)">'+shortNum(g)+'</text>';
@@ -1178,7 +1196,7 @@ function applyStyle(){
   if(S.accent){ st.setProperty("--accent",S.accent); st.setProperty("--onaccent", lum(S.accent)>0.35?"#111111":"#ffffff"); }
   else { st.removeProperty("--accent"); st.removeProperty("--onaccent"); }
 }
-var CEIL={prob:100,rsi:100};
+var CEIL={prob:100,rsi:100,fg:100};
 function rangeBounds(mid,i){   /* 이 단계의 [아래끝, 위끝] — 위끝이 null이면 끝없음 */
   var m=MET[mid], c=S.mx[mid].cuts, lo, hi;
   if(m.asc){ lo = i===0 ? (m.neg?null:0) : c[i-1]; hi = i<4 ? c[i] : null; }
@@ -1255,7 +1273,7 @@ function render(){
   document.getElementById("rows").innerHTML=html;
   if(openSym && !rowEl(openSym)){ openSym=null; leaveOv("row"); }
   document.getElementById("legend").innerHTML=legendHtml();
-  srcInfo();
+  srcInfo(); mktRender();
 }
 function tabFade(){
   var el=document.getElementById("tabs");
@@ -1275,6 +1293,95 @@ function srcInfo(){
   dt.textContent=shortDate(last)+(live&&usOpen()?" 장중":" 종가");
 }
 function fadeRows(){ var r=document.getElementById("rows"); r.classList.remove("fade"); void r.offsetWidth; r.classList.add("fade"); }
+
+/* ═════════════ 시장 공포 지표 (공포·탐욕 / VIX / MOVE) ═════════════ */
+var MKT=[
+  {id:"fg",  name:"공포탐욕",
+   title:"공포·탐욕 지수 (CNN)", desc:"CNN이 주가 흐름, 변동성, 풋/콜 등 7가지를 합쳐 만든 0~100 점수예요. 낮을수록 공포, 높을수록 탐욕이에요."},
+  {id:"vix", name:"VIX", sym:"^VIX",
+   title:"VIX 변동성 지수", desc:"S&P 500 옵션이 예상하는 앞으로 30일의 변동성이에요. 높을수록 시장이 불안하다는 뜻이에요."},
+  {id:"move",name:"MOVE", sym:"^MOVE",
+   title:"MOVE 채권 변동성 지수", desc:"미국 국채 금리의 예상 변동성이에요. 채권 시장의 VIX로 불려요."}
+];
+var mkt={}, mktOpen=null;
+var CNN_URL="https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+function mktDemo(){
+  function mk(base,amp,v,prev){
+    var n=Math.max(300,(new Date().getFullYear()-S.year+1)*252), ts=[], h=[], now=Date.now();
+    for(var i=0;i<n;i++){ ts.push(now-(n-1-i)*86400000*1.45); h.push(+(base+amp*Math.sin(i/45)+amp*.5*Math.sin(i/11)).toFixed(2)); }
+    h[n-1]=v; h[n-2]=prev; return {v:v,prev:prev,hist:h,ts:ts};
+  }
+  mkt.fg=mk(50,22,38,35); mkt.vix=mk(19,5,21.4,20.6); mkt.move=mk(100,14,96.2,98.1);
+}
+function mktFromSeries(s){
+  var n=s.c.length, st=0, d0=Date.UTC(S.year,0,1)/86400000;
+  while(st<n-1 && s.t[st]<d0) st++;
+  return {v:s.c[n-1], prev:n>1?s.c[n-2]:null, hist:s.c.slice(st), ts:s.t.slice(st).map(function(d){ return d*86400000; })};
+}
+function fetchFG(){
+  var start=Math.max(S.year,2011)+"-01-01";
+  function get(u){ return getJson(API_BASE+"/y?u="+encodeURIComponent(u),20000); }
+  return get(CNN_URL+"/"+start).catch(function(){ return get(CNN_URL); }).then(function(j){
+    var f=j&&j.fear_and_greed, hh=(j&&j.fear_and_greed_historical&&j.fear_and_greed_historical.data)||[];
+    if(!f||typeof f.score!=="number") throw new Error("fg");
+    var t0=Date.UTC(S.year,0,1);   /* 기준 시작 연도 1월 1일 이전 값은 버려요 */
+    hh=hh.filter(function(d){ return +d.x>=t0; });
+    var hist=hh.map(function(d){ return +(+d.y).toFixed(1); }), ts=hh.map(function(d){ return +d.x; });
+    return {v:f.score, prev:typeof f.previous_close==="number"?f.previous_close:(hist.length>1?hist[hist.length-2]:null), hist:hist.length?hist:[f.score], ts:ts.length?ts:[Date.now()]};
+  });
+}
+function loadMkt(force){
+  if(S.mode==="demo"||!API_BASE){ mktDemo(); mktRender(); return; }
+  var jobs=[["fg",fetchFG()],["vix",loadSeries("^VIX",force).then(mktFromSeries)],["move",loadSeries("^MOVE",force).then(mktFromSeries)]];
+  jobs.forEach(function(jb){
+    jb[1].then(function(r){ mkt[jb[0]]=r; if(jb[0]==="fg"){ try{ localStorage.setItem("mdd.m.fg",JSON.stringify(r)); }catch(e){} } mktRender(); })
+      .catch(function(){ if(!mkt[jb[0]]&&jb[0]==="fg"){ try{ var c=localStorage.getItem("mdd.m.fg"); if(c) mkt.fg=JSON.parse(c); }catch(e){} } mktRender(); });
+  });
+}
+function mktBoxes(){
+  return MKT.map(function(m){
+    var r=mkt[m.id], on=S.mx[m.id].on;
+    if(!r) return '<button class="mb" data-mk="'+m.id+'" style="--c:var(--muted)"><div class="k">'+m.name+'</div><div class="v num">–</div><div class="sub"></div></button>';
+    var t=tierFor(m.id,r.v), col=on?colorOr(m.id,t,"var(--text)"):"var(--text)", d=r.prev!=null?r.v-r.prev:null;
+    var dtxt=d==null?"":(d>=0?"▲ ":"▼ ")+Math.abs(d).toFixed(1);
+    return '<button class="mb'+(mktOpen===m.id?' on':'')+'" data-mk="'+m.id+'" style="--c:'+col+'"><div class="k">'+m.name+(on?'<i>'+tierNames(m.id)[t]+'</i>':'')+'</div><div class="v num">'+r.v.toFixed(m.id==="fg"?0:1)+'</div><div class="sub num">'+dtxt+'</div></button>';
+  }).join("");
+}
+function mktView(r){   /* 기준 시작 연도 1월 1일부터의 값만 */
+  var t0=Date.UTC(S.year,0,1), k=0; while(k<r.ts.length-1 && r.ts[k]<t0) k++;
+  return {v:r.v,prev:r.prev,hist:r.hist.slice(k),ts:r.ts.slice(k)};
+}
+function mktSpark(r,col){
+  r=mktView(r);
+  var W=340,H=118,pl=2,pr=34,pt=8,pb=18,iw=W-pl-pr,ih=H-pt-pb, h=r.hist, ts=r.ts, n=h.length;
+  if(n>360){   /* 점이 너무 많으면 묶어서 그려요 */
+    var B=300, nh=[], nt=[];
+    for(var b=0;b<B;b++){ var a0=Math.floor(b*n/B), a1=Math.max(a0+1,Math.floor((b+1)*n/B)), sm=0; for(var k=a0;k<a1;k++) sm+=h[k]; nh.push(sm/(a1-a0)); nt.push(ts[a1-1]); }
+    nh[B-1]=h[n-1]; h=nh; ts=nt; n=B;
+  }
+  var lo=Math.min.apply(null,h), hi=Math.max.apply(null,h), pad=(hi-lo)*.08||1; lo-=pad; hi+=pad;
+  function X(i){ return pl+iw*(n>1?i/(n-1):1); } function Y(v){ return pt+ih*(1-(v-lo)/(hi-lo)); }
+  var d=h.map(function(v,i){ return (i?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1); }).join(" ");
+  var out='<svg viewBox="0 0 '+W+' '+H+'" style="color:'+col+'">';
+  [hi-pad,lo+pad].forEach(function(v){ out+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'" stroke="var(--line)"/><text x="'+(W-pr+4)+'" y="'+(Y(v)+3.5).toFixed(1)+'" font-size="10" fill="var(--muted)">'+shortNum(v)+'</text>'; });
+  out+=yearTicks({t:ts.map(function(x){ return Math.floor(x/86400000); }),i0:0},X,H,pt,pb);
+  out+='<path d="'+d+'" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="'+X(n-1).toFixed(1)+'" cy="'+Y(h[n-1]).toFixed(1)+'" r="4" fill="currentColor"/>';
+  return out+"</svg>";
+}
+function mktRender(){
+  var c=document.getElementById("mktCards"); if(!c) return;
+  c.innerHTML=mktBoxes();
+  var fo=document.getElementById("mktFold"), pn=document.getElementById("mktPanel");
+  var m=MKT.filter(function(x){ return x.id===mktOpen; })[0], r=m&&mkt[m.id];
+  if(m&&r){
+    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+'</p>'+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"));
+    fo.classList.add("open");
+  } else if(!m) fo.classList.remove("open");
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest("[data-mk]"); if(!b) return;
+  var id=b.getAttribute("data-mk"); mktOpen=(mktOpen===id)?null:id; mktRender();
+});
 
 /* ═════════════ 행 펼치기 ═════════════ */
 function rowEl(sym){
@@ -1748,7 +1855,7 @@ function refreshSettings(){ var sh=document.getElementById("sheet"), top=sh.scro
 function setYear(y){
   var max=new Date().getFullYear()-1; y=Math.max(FIRST_YEAR,Math.min(max,y));
   if(y===S.year) return;
-  S.year=y; save(); render();
+  S.year=y; save(); render(); loadMkt();
 }
 
 /* 연도 다이얼: 좌우로 돌리면 가운데 칸의 연도가 선택돼요 */
@@ -1810,7 +1917,7 @@ function onSettingsChange(e){
   var c=S.mx[mid].cuts.slice(), ok=isFinite(v)&&(m.neg||v>0);
   c[i]=v;
   if(ok){ for(var k=1;k<4;k++){ if(m.asc ? !(c[k]>c[k-1]) : !(c[k]<c[k-1])) ok=false; } }
-  if(ok && (mid==="prob"||mid==="rsi") && c[0]>=100) ok=false;
+  if(ok && (mid==="prob"||mid==="rsi"||mid==="fg") && c[0]>=100) ok=false;
   if(!ok){ toast(m.asc?"구간 숫자는 위에서부터 차례로 커져야 해요":"구간 숫자는 위에서부터 차례로 작아져야 해요 (0~100)"); t.value=S.mx[mid].cuts[i]; return; }
   S.mx[mid].cuts=c; save(); render(); refreshSettings();
 }
@@ -1933,6 +2040,7 @@ function refreshAll(force,quiet){
   if(S.mode==="demo") return;
   lastRefresh=Date.now();
   if(force){ spinHold=true; srcInfo(); setTimeout(function(){ spinHold=false; srcInfo(); },900); }
+  loadMkt(force);
   var done=0, tot=S.tickers.length;
   S.tickers.forEach(function(sym){ fetchTicker(sym,force,quiet).then(function(){ done++; if(force&&done===tot) toast("최신 데이터로 갱신했어요"); }); });
 }
@@ -2051,11 +2159,12 @@ function init(){
     document.addEventListener("visibilitychange",function(){ if(!document.hidden && sync.state!=="pending" && sync.state!=="saving") pullCloud(true); });
   }
   // 첫 종목으로 연결 상태를 먼저 확인(실제/데모 결정) → 나머지는 병렬로
-  var first=S.tickers[0]; if(!first) return;
+  var first=S.tickers[0]; if(!first){ loadMkt(); return; }
   busy++; srcInfo();
   loadSeries(first).then(function(s){ store[first]=s; delete loading[first]; busy--; render(); })
    .catch(function(){ delete loading[first]; busy--; render(); toast("데이터를 불러오지 못했어요"); })
    .then(function(){
+     loadMkt();
      S.tickers.slice(1).forEach(function(sym){ fetchTicker(sym).then(function(ok){ if(!ok) toast(sym+" 불러오기 실패"); }); });
    });
 }
