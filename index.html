@@ -417,6 +417,16 @@ details.legend p{margin:10px 0 0}
 
 .toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,30px);background:var(--text);color:var(--bg);padding:11px 18px;border-radius:99px;font-size:13.5px;font-weight:500;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.act{pointer-events:auto;display:flex;align-items:center;gap:14px;padding-right:10px}
+.toast.act button{border:0;border-radius:99px;background:var(--accent);color:var(--onaccent,#fff);font-size:13px;font-weight:700;padding:6px 13px}
+.rw:not(.sk)>.rr{touch-action:pan-y}
+.rw.swp{overflow:hidden}
+.rw.swp>.rr{position:relative;z-index:1;background:var(--surface)}
+.swb{position:absolute;inset:0;display:none;align-items:center;z-index:0;font-size:13px;font-weight:700;color:#fff}
+.swb.l{background:var(--accent);justify-content:flex-start;padding-left:22px;color:var(--onaccent,#fff)}
+.swb.r{background:#e5484d;justify-content:flex-end;padding:0}
+.swb.r button{border:0;background:none;color:#fff;font-weight:700;font-size:13.5px;width:84px;height:100%}
+.rr.swa{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
 
 /* ───── 머티리얼 3 ───── */
 [data-theme="material"] .tab.on{background:#D3E3FD;color:#041E49}
@@ -1084,6 +1094,17 @@ function applyOrder(syms){
   var set={}, j=0; syms.forEach(function(s){ set[s]=1; });
   S.tickers=S.tickers.map(function(t){ return set[t] ? syms[j++] : t; });
 }
+/* 종목 순서를 카테고리 순서대로 묶어요(같은 카테고리 안에서는 기존 순서 유지). last가 있으면 그 종목은 자기 카테고리의 맨 아래로 가요 */
+function groupTickers(last){
+  if(!catsActive()) return;
+  var ord={}; S.cats.forEach(function(c,i){ ord[c.id]=i; });
+  var list=S.tickers.slice();
+  if(last){ list=list.filter(function(x){ return x!==last; }); list.push(last); }
+  var idx={}; list.forEach(function(x,i){ idx[x]=i; });
+  function g(x){ var id=groupOf(x); return ord[id]==null ? 9999 : ord[id]; }
+  list.sort(function(a,b){ return g(a)-g(b) || idx[a]-idx[b]; });
+  S.tickers=list;
+}
 function moveTicker(sym, catId, idx){
   freezeOrder();
   if(catId==="_none") delete S.catOf[sym]; else S.catOf[sym]=catId;
@@ -1746,6 +1767,7 @@ function endDrag(){
         var byId={}; S.cats.forEach(function(c){ byId[c.id]=c; });
         var ids=order.map(function(el){ return el.getAttribute(attr); }).filter(function(id){ return byId[id]; });
         S.cats=ids.map(function(id){ return byId[id]; });
+        groupTickers();
       }
     }
     save(); render();
@@ -2144,7 +2166,7 @@ function onSettingsClick(e){
 
 /* 토스트 */
 var toastT;
-function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove("on");},2600); }
+function toast(msg){ var t=document.getElementById("toast"); t.classList.remove("act"); t.textContent=msg; t.classList.add("on"); clearTimeout(toastT); toastT=setTimeout(function(){t.classList.remove("on");},2600); }
 
 /* ═════════════ 종목 검색 패널 ═════════════ */
 var Q = {timer:null, seq:0, items:[], label:"", direct:null, remote:[]};
@@ -2239,6 +2261,7 @@ function addTicker(raw){
   if(S.tickers.indexOf(sym)>=0){ toast(sym+"은(는) 이미 있어요"); return; }
   S.tickers.push(sym);
   if(catsActive() && S.addCat!=="_none") S.catOf[sym]=S.addCat;
+  groupTickers(sym);
   loading[sym]=true; pend[sym]=true; render(); renderResults();
   loadSeries(sym).then(function(s){
     store[sym]=s; delete loading[sym]; delete pend[sym]; save(); render(); renderResults(); toast(sym+" 추가했어요");
@@ -2247,6 +2270,81 @@ function addTicker(raw){
     S.tickers=S.tickers.filter(function(x){return x!==sym;}); delete S.catOf[sym]; render(); renderResults();
     toast(e&&e.notFound ? "‘"+sym+"’ 종목을 찾지 못했어요" : "데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요");
   });
+}
+function toastUndo(msg,fn){
+  var t=document.getElementById("toast"); t.textContent=""; t.classList.add("act");
+  var sp=document.createElement("span"); sp.textContent=msg; var b=document.createElement("button"); b.textContent="되돌리기";
+  b.onclick=function(){ t.classList.remove("on"); clearTimeout(toastT); fn(); };
+  t.appendChild(sp); t.appendChild(b); t.classList.add("on"); clearTimeout(toastT);
+  toastT=setTimeout(function(){ t.classList.remove("on"); },5000);
+}
+function deleteWithUndo(sym){
+  var snap={i:S.tickers.indexOf(sym),cat:S.catOf[sym],st:store[sym]};
+  removeTicker(sym);
+  toastUndo(sym+" 삭제했어요",function(){
+    if(S.tickers.indexOf(sym)>=0) return;
+    S.tickers.splice(Math.max(0,snap.i),0,sym);
+    if(snap.cat) S.catOf[sym]=snap.cat;
+    if(snap.st) store[sym]=snap.st;
+    save(); render(); toast(sym+" 되돌렸어요");
+  });
+}
+function moveDialog(sym){
+  var cur=groupOf(sym), btns=[];
+  S.cats.forEach(function(c){ if(c.id!==cur) btns.push({label:c.name,fn:function(){ S.catOf[sym]=c.id; groupTickers(sym); save(); render(); toast(sym+" → "+c.name); }}); });
+  if(cur!=="_none") btns.push({label:"미분류",fn:function(){ delete S.catOf[sym]; groupTickers(sym); save(); render(); toast(sym+" → 미분류"); }});
+  btns.push({label:"취소"});
+  showDlg({title:sym+" 카테고리 이동",vertical:true,buttons:btns});
+}
+/* ── 좌우 스와이프(수정 모드): 왼쪽=삭제, 오른쪽=카테고리 이동 ── */
+var sw=null, swOpen=null, swSupp=false;
+function swSuppress(){ swSupp=true; setTimeout(function(){ swSupp=false; },380); }
+function swClose(rw,instant){
+  if(!rw) return; var rr=rw.querySelector(".rr");
+  if(rr){ if(!instant) rr.classList.add("swa"); rr.style.transform=""; }
+  setTimeout(function(){ rw.classList.remove("swp"); if(rr) rr.classList.remove("swa"); var b=rw.querySelectorAll(".swb"); Array.prototype.forEach.call(b,function(x){ x.remove(); }); },instant?0:240);
+  if(swOpen===rw) swOpen=null;
+}
+function swDown(e){
+  if(!S.edit||drag||e.pointerType==="mouse") return;
+  var t=e.target;
+  if(swOpen && !t.closest(".swdel")){ swSuppress(); swClose(swOpen); if(!t.closest(".rr")) return; }
+  var rr=t.closest(".rr"); if(!rr||t.closest(".sdots")) return;
+  var rw=rr.parentElement; if(!rw.parentElement.classList.contains("rows")||rw.classList.contains("open")||rw.classList.contains("sk")) return;
+  if(swOpen===rw) return;
+  sw={rw:rw,rr:rr,id:e.pointerId,x:e.clientX,y:e.clientY,dx:0,on:false,w:rw.offsetWidth};
+  window.addEventListener("pointermove",swMove);
+  window.addEventListener("pointerup",swUp);
+  window.addEventListener("pointercancel",swUp);
+}
+function swStop(){ window.removeEventListener("pointermove",swMove); window.removeEventListener("pointerup",swUp); window.removeEventListener("pointercancel",swUp); }
+function swMove(e){
+  if(!sw||e.pointerId!==sw.id) return;
+  if(drag){ swStop(); sw=null; return; }
+  var dx=e.clientX-sw.x, dy=e.clientY-sw.y;
+  if(!sw.on){
+    if(Math.abs(dy)>10 && Math.abs(dy)>Math.abs(dx)){ swStop(); sw=null; return; }
+    if(Math.abs(dx)>12 && Math.abs(dx)>Math.abs(dy)*1.4){
+      sw.on=true; cancelPress();
+      var rw=sw.rw; rw.classList.add("swp");
+      rw.insertAdjacentHTML("afterbegin",'<div class="swb l">카테고리 이동 ▸</div><div class="swb r"><button class="swdel" type="button">삭제</button></div>');
+      sw.l=rw.querySelector(".swb.l"); sw.r=rw.querySelector(".swb.r");
+      sw.x=e.clientX; dx=0;
+    } else return;
+  }
+  var lim=sw.w*0.7; sw.dx=Math.max(-lim,Math.min(lim,dx));
+  if(!S.cats.length && sw.dx>0) sw.dx=0;
+  sw.rr.style.transform="translateX("+sw.dx+"px)";
+  sw.l.style.display=sw.dx>0?"flex":"none"; sw.r.style.display=sw.dx<0?"flex":"none";
+}
+function swUp(){
+  swStop(); var d=sw; sw=null; if(!d||!d.on) return;
+  swSuppress();
+  var sym=d.rw.getAttribute("data-sym"), dx=d.dx;
+  if(dx<=-d.w*0.55){ d.rr.classList.add("swa"); d.rr.style.transform="translateX(-100%)"; setTimeout(function(){ deleteWithUndo(sym); },200); return; }
+  if(dx<=-56){ d.rr.classList.add("swa"); d.rr.style.transform="translateX(-84px)"; swOpen=d.rw; return; }
+  swClose(d.rw);
+  if(dx>=64 && S.cats.length) setTimeout(function(){ moveDialog(sym); },120);
 }
 function removeTicker(sym){
   S.tickers=S.tickers.filter(function(x){return x!==sym;}); delete store[sym]; delete S.catOf[sym]; if(openSym===sym){ openSym=null; leaveOv("row"); }
@@ -2261,7 +2359,8 @@ function onHeadClick(e){
   save(); render();
 }
 function onRowsClick(e){
-  if(justDragged) return;
+  if(justDragged||swSupp) return;
+  var sd=e.target.closest(".swdel"); if(sd){ var rw0=sd.closest(".rw"); swOpen=null; deleteWithUndo(rw0.getAttribute("data-sym")); return; }
   var nc=e.target.closest("[data-newcat]"); if(nc){ newCategoryDialog(); return; }
   var sm=e.target.closest("[data-secmenu]"); if(sm){ categoryMenu(sm.getAttribute("data-secmenu")); return; }
   var sh=e.target.closest(".sech");
@@ -2279,6 +2378,7 @@ function onRowsClick(e){
   if(cc){
     var id2=cc.getAttribute("data-setcat");
     if(id2==="_none") delete S.catOf[sym]; else S.catOf[sym]=id2;
+    groupTickers(sym);
     save(); render(); toast(sym+" → "+catName(id2)); return;
   }
   if(e.target.closest(".retry")){ fetchTicker(sym).then(function(ok){ if(ok&&openSym===sym){ var el=rowEl(sym); if(el) el.querySelector(".dtc").innerHTML=detailHtml(sym); } else if(!ok) toast("아직 불러오지 못했어요"); }); return; }
@@ -2309,6 +2409,7 @@ function init(){
   var rows=document.getElementById("rows"), tabs=document.getElementById("tabs");
   document.getElementById("th").onclick=onHeadClick;
   rows.onclick=onRowsClick;
+  rows.addEventListener("pointerdown",swDown);
   rows.addEventListener("pointerdown",onPtrDown);
   tabs.addEventListener("pointerdown",onPtrDown);
   tabs.addEventListener("scroll",tabFade,{passive:true});
