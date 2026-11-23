@@ -230,6 +230,20 @@ button{cursor:pointer}
 .frt tr.sep th{text-align:left;font-size:10.5px;padding-top:10px;border-top:1px solid var(--line)}
 .frt tr.base td,.frt tr.base th{opacity:.8}
 .frt tr.base td b{font-size:12px;font-weight:600}
+.frt td.clk{cursor:pointer;border-radius:8px}
+.frt td small.lk{text-decoration:underline dotted;text-underline-offset:2px}
+.frt td.clk:active,.frt td.clk.sel{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.fwdl{margin-top:8px;border-radius:12px;padding:10px;background:var(--surface2);border:1px solid var(--line)}
+.fwdlh{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:6px}
+.fwdlh span{color:var(--muted);font-size:11px;flex:1}
+.fwdx{border:0;background:none;color:var(--muted);font-size:14px;padding:2px 6px}
+.fwdl table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.fwdl th{font-size:10.5px;color:var(--muted);font-weight:600;text-align:left;padding:4px 2px}
+.fwdl th:nth-child(2),.fwdl td.dd{text-align:center}
+.fwdl th:last-child,.fwdl td:last-child{text-align:right}
+.fwdl td{padding:6px 2px;border-top:1px solid var(--line)}
+.fwdl td.dd{color:var(--muted)}
+.fwdl b.up{color:var(--s0)} .fwdl b.dn{color:var(--s3)} .fwdl .na{color:var(--muted);font-size:11px}
 .fwdn{font-size:10.5px;line-height:1.5;color:var(--muted);margin:8px 0 4px}
 .chart{margin-top:4px}
 .ctitle{font-size:11.5px;font-weight:700;margin-top:14px;display:flex;justify-content:space-between;align-items:baseline}
@@ -1432,15 +1446,32 @@ function fwdStats(days, ser){
 function fwdAgg(arr,minN){ var n=arr.length; if(n<(minN||8)) return null; var sm=0,w=0; arr.forEach(function(v){ sm+=v; if(v>0) w++; }); return {avg:sm/n*100, win:w/n*100, w:w, n:n}; }
 /* 시기(연속해서 범위 안에 머문 날들의 묶음)마다 평균을 내고, 시기끼리 평균 */
 function fwdEpisodes(eps, ser){
-  var per=FWD.map(function(){ return []; });
+  var per=FWD.map(function(){ return []; }), det=[];
   eps.forEach(function(ep){
-    var r=fwdStats(ep,ser);
-    r.forEach(function(arr,k){ if(arr.length){ var sm=0; arr.forEach(function(v){ sm+=v; }); per[k].push(sm/arr.length); } });
+    var r=fwdStats(ep,ser), row={s:ep[0],e:ep[ep.length-1],d:ep.length,r:[]};
+    r.forEach(function(arr,k){ if(arr.length){ var sm=0; arr.forEach(function(v){ sm+=v; }); per[k].push(sm/arr.length); row.r[k]=sm/arr.length; } else row.r[k]=null; });
+    det.push(row);
   });
-  return per.map(function(a){ return fwdAgg(a,1); });
+  var out=per.map(function(a){ return fwdAgg(a,1); }); out.det=det; return out;
 }
-function fwdCell(a,withWin){
+var fwdSel=null;   /* 펼친 칸: "sp:2" 처럼 지수:기간 */
+function fwdListHtml(res){
+  if(!fwdSel) return "";
+  var p=fwdSel.split(":"), ix=p[0], k=+p[1], det=(res[ix]&&res[ix].det)||[], f=FWD[k];
+  var nm=ix==="sp"?"S&P 500":"나스닥";
+  var rows=det.slice().reverse().map(function(d){
+    var v=d.r[k], per=shortDate(d.s)+(d.e!==d.s?' ~ '+shortDate(d.e):'');
+    var res2 = v==null ? '<span class="na">아직 안 지남</span>' : '<b class="'+(v>=0?'up':'dn')+'">'+(v>=0?'▲ +':'▼ −')+Math.abs(v*100).toFixed(1)+'%</b>';
+    return '<tr><td>'+per+'</td><td class="dd">'+d.d+'일</td><td>'+res2+'</td></tr>';
+  }).join("");
+  var up=det.filter(function(d){ return d.r[k]!=null&&d.r[k]>=0; }).length, dn=det.filter(function(d){ return d.r[k]!=null&&d.r[k]<0; }).length;
+  return '<div class="fwdl"><div class="fwdlh"><b>'+nm+' · '+f[1]+' 뒤</b><span>상승 '+up+'회 · 하락 '+dn+'회</span><button class="fwdx" data-fwd="'+fwdSel+'" aria-label="닫기">✕</button></div>'+
+    '<table><thead><tr><th>그 값이었던 시기</th><th>머문 날</th><th>'+f[1]+' 뒤</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="fwdn">최근 시기부터 보여요. 수익률은 그 시기 안의 날들에 샀다고 보고 낸 평균이에요.</div></div>';
+}
+function fwdCell(a,withWin,id){
   if(!a) return '<td class="na">–</td>';
+  if(id) return '<td class="clk'+(fwdSel===id?' sel':'')+'" data-fwd="'+id+'"><b class="'+(a.avg>=0?"up":"dn")+'">'+(a.avg>=0?"+":"−")+Math.abs(a.avg).toFixed(1)+'%</b><small class="lk">상승 '+a.w+'/'+a.n+'회</small></td>';
   var cl=a.avg>=0?"up":"dn", tx=(a.avg>=0?"+":"−")+Math.abs(a.avg).toFixed(1)+"%";
   return '<td><b class="'+cl+'">'+tx+'</b>'+(withWin?'<small>상승 '+a.w+'/'+a.n+'회</small>':'')+'</td>';
 }
@@ -1462,15 +1493,15 @@ function mktFwdHtml(m,r){
     fwdCache[key]=res;
   }
   var head='<tr><th></th>'+FWD.map(function(f){ return '<th>'+f[1]+'</th>'; }).join("")+'</tr>';
-  function row(lbl,arr,w,cls){ return '<tr class="'+(cls||"")+'"><th>'+lbl+'</th>'+arr.map(function(a){ return fwdCell(a,w); }).join("")+'</tr>'; }
+  function row(lbl,arr,w,cls,ix){ return '<tr class="'+(cls||"")+'"><th>'+lbl+'</th>'+arr.map(function(a,k){ return fwdCell(a,w,ix?ix+':'+k:null); }).join("")+'</tr>'; }
   var dg=m.id==="fg"?0:1, fm=function(x){ return Math.max(0,x).toFixed(dg); };
   return '<div class="ctitle" style="margin-top:12px">지금('+r.v.toFixed(dg)+')과 비슷한 값('+fm(res.lo)+' ~ '+fm(res.hi)+')이었던 시기 이후의 수익률</div>'+
-    '<div class="fwdn" style="margin:2px 0 0">시기 '+res.n+'회 기준</div>'+
+    '<div class="fwdn" style="margin:2px 0 0">시기 '+res.n+'회 기준 · 칸을 누르면 시기별 내역이 보여요</div>'+
     '<table class="frt"><thead>'+head+'</thead><tbody>'+
-    row("S&P 500",res.sp,true)+row("나스닥",res.nq,true)+
+    row("S&P 500",res.sp,true,"","sp")+row("나스닥",res.nq,true,"","nq")+
     '<tr class="sep"><th colspan="5">비교 · 전체 기간 평균</th></tr>'+
     row("S&P 500",res.spA,false,"base")+row("나스닥",res.nqA,false,"base")+
-    '</tbody></table>'+
+    '</tbody></table>'+fwdListHtml(res)+
     '<div class="fwdn">'+S.year+'년 이후 지금과 비슷한 값(범위 안)에 머문 구간을 한 번으로 세요(총 '+res.nd+'일). 평균은 시기별 평균의 평균이고, 시기가 적으면 숫자가 크게 흔들려요. 아직 기간이 지나지 않은 최근 시기는 해당 열에서 빠져요. 지수 가격 기준(배당 제외)이에요.'+(res.n===0?' 비슷한 값이었던 적이 없어요.':'')+'</div>';
 }
 function mktView(r){   /* 기준 시작 연도 1월 1일부터의 값만 */
@@ -1500,14 +1531,15 @@ function mktRender(){
   var fo=document.getElementById("mktFold"), pn=document.getElementById("mktPanel");
   var m=MKT.filter(function(x){ return x.id===mktOpen; })[0], r=m&&mkt[m.id];
   if(m&&r){
-    var note=(m.id==="fg"&&r.cnn0&&r.ts[0]<r.cnn0)?'<div class="fwdn" style="margin:2px 0 6px">'+new Date(r.cnn0).getUTCFullYear()+'년 '+(new Date(r.cnn0).getUTCMonth()+1)+'월 이전 값은 CNN이 아닌 공개 모음 자료예요. 출처마다 값이 조금씩 다를 수 있어요.</div>':'';
-    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+'</p>'+note+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"))+mktFwdHtml(m,r);
+    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+'</p>'+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"))+mktFwdHtml(m,r);
     fo.classList.add("open");
   } else if(!m) fo.classList.remove("open");
 }
 document.addEventListener("click",function(e){
+  var f=e.target.closest&&e.target.closest("[data-fwd]");
+  if(f){ var fid=f.getAttribute("data-fwd"); fwdSel=(fwdSel===fid)?null:fid; mktRender(); if(fwdSel){ var l=document.querySelector(".fwdl"); if(l) try{ l.scrollIntoView({block:"nearest",behavior:"smooth"}); }catch(er){} } return; }
   var b=e.target.closest&&e.target.closest("[data-mk]"); if(!b) return;
-  var id=b.getAttribute("data-mk"); mktOpen=(mktOpen===id)?null:id; mktRender();
+  var id=b.getAttribute("data-mk"); mktOpen=(mktOpen===id)?null:id; fwdSel=null; mktRender();
 });
 
 /* ═════════════ 행 펼치기 ═════════════ */
