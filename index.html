@@ -239,7 +239,10 @@ button{cursor:pointer}
 .fwdx{border:0;background:none;color:var(--muted);font-size:14px;padding:2px 6px}
 .fwdl table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
 .fwdl th{font-size:10.5px;color:var(--muted);font-weight:600;text-align:left;padding:4px 2px}
-.fwdl th:nth-child(2),.fwdl td.dd{text-align:center}
+.fwdl th:nth-child(3),.fwdl td.dd{text-align:center}
+.fwdl .vr{text-align:center;white-space:nowrap}
+.fwdl td.vr{font-weight:600}
+.fwdl td.pr{line-height:1.35;font-size:11.5px}
 .fwdl th:last-child,.fwdl td:last-child{text-align:right}
 .fwdl td{padding:6px 2px;border-top:1px solid var(--line)}
 .fwdl td.dd{color:var(--muted)}
@@ -1448,7 +1451,7 @@ function fwdAgg(arr,minN){ var n=arr.length; if(n<(minN||8)) return null; var sm
 function fwdEpisodes(eps, ser){
   var per=FWD.map(function(){ return []; }), det=[];
   eps.forEach(function(ep){
-    var r=fwdStats(ep,ser), row={s:ep[0],e:ep[ep.length-1],d:ep.length,r:[]};
+    var r=fwdStats(ep,ser), row={s:ep[0],e:ep[ep.length-1],d:ep.length,lo:ep.lo,hi:ep.hi,r:[]};
     r.forEach(function(arr,k){ if(arr.length){ var sm=0; arr.forEach(function(v){ sm+=v; }); per[k].push(sm/arr.length); row.r[k]=sm/arr.length; } else row.r[k]=null; });
     det.push(row);
   });
@@ -1460,13 +1463,14 @@ function fwdListHtml(res){
   var p=fwdSel.split(":"), ix=p[0], k=+p[1], det=(res[ix]&&res[ix].det)||[], f=FWD[k];
   var nm=ix==="sp"?"S&P 500":"나스닥";
   var rows=det.slice().reverse().map(function(d){
-    var v=d.r[k], per=shortDate(d.s)+(d.e!==d.s?' ~ '+shortDate(d.e):'');
+    var v=d.r[k], per=shortDate(d.s)+(d.e!==d.s?'<br>~ '+shortDate(d.e):'');
+    var vr=d.lo===d.hi?d.lo.toFixed(res.dg):d.lo.toFixed(res.dg)+'~'+d.hi.toFixed(res.dg);
     var res2 = v==null ? '<span class="na">아직 안 지남</span>' : '<b class="'+(v>=0?'up':'dn')+'">'+(v>=0?'▲ +':'▼ −')+Math.abs(v*100).toFixed(1)+'%</b>';
-    return '<tr><td>'+per+'</td><td class="dd">'+d.d+'일</td><td>'+res2+'</td></tr>';
+    return '<tr><td class="pr">'+per+'</td><td class="vr">'+vr+'</td><td class="dd">'+d.d+'일</td><td>'+res2+'</td></tr>';
   }).join("");
   var up=det.filter(function(d){ return d.r[k]!=null&&d.r[k]>=0; }).length, dn=det.filter(function(d){ return d.r[k]!=null&&d.r[k]<0; }).length;
   return '<div class="fwdl"><div class="fwdlh"><b>'+nm+' · '+f[1]+' 뒤</b><span>상승 '+up+'회 · 하락 '+dn+'회</span><button class="fwdx" data-fwd="'+fwdSel+'" aria-label="닫기">✕</button></div>'+
-    '<table><thead><tr><th>그 값이었던 시기</th><th>머문 날</th><th>'+f[1]+' 뒤</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<table><thead><tr><th>시기</th><th class="vr">지표 값</th><th>머문 날</th><th>'+f[1]+' 뒤</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="fwdn">최근 시기부터 보여요. 수익률은 그 시기 안의 날들에 샀다고 보고 낸 평균이에요.</div></div>';
 }
 function fwdCell(a,withWin,id){
@@ -1485,11 +1489,12 @@ function mktFwdHtml(m,r){
     for(var i=0;i<v.hist.length;i++){
       var dd=Math.floor(v.ts[i]/86400000); all.push(dd);
       if(v.hist[i]>=lo && v.hist[i]<=hi){
-        if(!cur || i-lastHit>6){ cur=[]; eps.push(cur); }
+        if(!cur || i-lastHit>6){ cur=[]; cur.lo=Infinity; cur.hi=-Infinity; eps.push(cur); }
         cur.push(dd); lastHit=i; nd++;
+        if(v.hist[i]<cur.lo) cur.lo=v.hist[i]; if(v.hist[i]>cur.hi) cur.hi=v.hist[i];
       }
     }
-    res={lo:lo,hi:hi,n:eps.length,nd:nd, sp:fwdEpisodes(eps,ix.gspc), nq:fwdEpisodes(eps,ix.ixic), spA:fwdStats(all,ix.gspc).map(function(a){ return fwdAgg(a,8); }), nqA:fwdStats(all,ix.ixic).map(function(a){ return fwdAgg(a,8); })};
+    res={dg:m.id==="fg"?0:1,lo:lo,hi:hi,n:eps.length,nd:nd, sp:fwdEpisodes(eps,ix.gspc), nq:fwdEpisodes(eps,ix.ixic), spA:fwdStats(all,ix.gspc).map(function(a){ return fwdAgg(a,8); }), nqA:fwdStats(all,ix.ixic).map(function(a){ return fwdAgg(a,8); })};
     fwdCache[key]=res;
   }
   var head='<tr><th></th>'+FWD.map(function(f){ return '<th>'+f[1]+'</th>'; }).join("")+'</tr>';
