@@ -1348,7 +1348,7 @@ function mktDemo(){
     h[n-1]=v; h[n-2]=prev; return {v:v,prev:prev,hist:h,ts:ts};
   }
   mkt.fg=mk(50,22,38,35); mkt.vix=mk(19,5,21.4,20.6); mkt.move=mk(100,14,96.2,98.1);
-  mkt.idx={gspc:demoSeries("^GSPC"),ixic:demoSeries("^IXIC")};
+  mkt.idx={gspc:demoSeries("^GSPC"),ixic:demoSeries("^NDX"),sox:demoSeries("^SOX")};
 }
 function mktFromSeries(s){
   var n=s.c.length, st=0, d0=Date.UTC(S.year,0,1)/86400000;
@@ -1415,7 +1415,8 @@ function loadMkt(force){
   if(S.mode==="demo"||!API_BASE){ mktDemo(); mktRender(); return; }
   var jobs=[["fg",fetchFG()],["vix",loadSeries("^VIX",force).then(mktFromSeries)],["move",loadSeries("^MOVE",force).then(mktFromSeries)]];
   loadSeries("^GSPC",force).then(function(x){ mkt.idx=mkt.idx||{}; mkt.idx.gspc=x; mktRender(); }).catch(function(){});
-  loadSeries("^IXIC",force).then(function(x){ mkt.idx=mkt.idx||{}; mkt.idx.ixic=x; mktRender(); }).catch(function(){});
+  loadSeries("^NDX",force).then(function(x){ mkt.idx=mkt.idx||{}; mkt.idx.ixic=x; mktRender(); }).catch(function(){});
+  loadSeries("^SOX",force).then(function(x){ mkt.idx=mkt.idx||{}; mkt.idx.sox=x; mktRender(); }).catch(function(){});
   jobs.forEach(function(jb){
     jb[1].then(function(r){ mkt[jb[0]]=r; if(jb[0]==="fg"){ try{ localStorage.setItem("mdd.m.fg",JSON.stringify(r)); }catch(e){} } mktRender(); })
       .catch(function(){ if(!mkt[jb[0]]&&jb[0]==="fg"){ try{ var c=localStorage.getItem("mdd.m.fg"); if(c) mkt.fg=JSON.parse(c); }catch(e){} } mktRender(); });
@@ -1463,7 +1464,7 @@ var fwdSel=null;   /* 펼친 칸: "sp:2" 처럼 지수:기간 */
 function fwdListHtml(res){
   if(!fwdSel) return "";
   var p=fwdSel.split(":"), ix=p[0], k=+p[1], det=(res[ix]&&res[ix].det)||[], f=FWD[k];
-  var nm=ix==="sp"?"S&P 500":"나스닥";
+  var nm=ix==="sp"?"S&P 500":ix==="nq"?"나스닥 100":"반도체(SOX)";
   var rows=det.slice().reverse().map(function(d){
     var v=d.r[k], per=shortDate(d.s)+(d.e!==d.s?'~'+shortDate(d.e):'');
     var vr=d.lo===d.hi?d.lo.toFixed(res.dg):d.lo.toFixed(res.dg)+'~'+d.hi.toFixed(res.dg);
@@ -1483,7 +1484,7 @@ function fwdCell(a,withWin,id){
 }
 function mktFwdHtml(m,r){
   var ix=mkt.idx; if(!ix||!ix.gspc||!ix.ixic) return '<div class="fwdn">지수 데이터를 불러오는 중이에요…</div>';
-  var v=mktView(r), key=[m.id,r.v,S.year,v.ts.length,ix.gspc.t.length,ix.ixic.t.length].join("|");
+  var v=mktView(r), key=[m.id,r.v,S.year,v.ts.length,ix.gspc.t.length,ix.ixic.t.length,ix.sox?ix.sox.t.length:0].join("|");
   var res=fwdCache[key];
   if(!res){
     /* 지금 값 그대로 비교: 지금 값 ± 일정 폭 안이었던 날을 '시기'로 묶어요(범위를 벗어난 날이 6일 넘게 이어지면 새 시기). 범위는 넓히지 않아요. */
@@ -1496,7 +1497,7 @@ function mktFwdHtml(m,r){
         if(v.hist[i]<cur.lo) cur.lo=v.hist[i]; if(v.hist[i]>cur.hi) cur.hi=v.hist[i];
       }
     }
-    res={dg:m.id==="fg"?0:1,lo:lo,hi:hi,n:eps.length,nd:nd, sp:fwdEpisodes(eps,ix.gspc), nq:fwdEpisodes(eps,ix.ixic), spA:fwdStats(all,ix.gspc).map(function(a){ return fwdAgg(a,8); }), nqA:fwdStats(all,ix.ixic).map(function(a){ return fwdAgg(a,8); })};
+    res={dg:m.id==="fg"?0:1,lo:lo,hi:hi,n:eps.length,nd:nd, sp:fwdEpisodes(eps,ix.gspc), nq:fwdEpisodes(eps,ix.ixic), sx:ix.sox?fwdEpisodes(eps,ix.sox):null, sxA:ix.sox?fwdStats(all,ix.sox).map(function(a){ return fwdAgg(a,8); }):null, spA:fwdStats(all,ix.gspc).map(function(a){ return fwdAgg(a,8); }), nqA:fwdStats(all,ix.ixic).map(function(a){ return fwdAgg(a,8); })};
     fwdCache[key]=res;
   }
   var head='<tr><th></th>'+FWD.map(function(f){ return '<th>'+f[1]+'</th>'; }).join("")+'</tr>';
@@ -1505,11 +1506,11 @@ function mktFwdHtml(m,r){
   return '<div class="ctitle" style="margin-top:12px">지금('+r.v.toFixed(dg)+')과 비슷한 값('+fm(res.lo)+' ~ '+fm(res.hi)+')이었던 시기 이후의 수익률</div>'+
     '<div class="fwdn" style="margin:2px 0 0">시기 '+res.n+'회 기준 · 칸을 누르면 시기별 내역이 보여요</div>'+
     '<table class="frt"><thead>'+head+'</thead><tbody>'+
-    row("S&P 500",res.sp,true,"","sp")+row("나스닥",res.nq,true,"","nq")+
+    row("S&P 500",res.sp,true,"","sp")+row("나스닥100",res.nq,true,"","nq")+(res.sx?row("반도체",res.sx,true,"","sx"):"")+
     '<tr class="sep"><th colspan="5">비교 · 전체 기간 평균</th></tr>'+
-    row("S&P 500",res.spA,false,"base")+row("나스닥",res.nqA,false,"base")+
+    row("S&P 500",res.spA,false,"base")+row("나스닥100",res.nqA,false,"base")+(res.sxA?row("반도체",res.sxA,false,"base"):"")+
     '</tbody></table>'+fwdListHtml(res)+
-    '<div class="fwdn">'+S.year+'년 이후 지금과 비슷한 값(범위 안)에 머문 구간을 한 번으로 세요(총 '+res.nd+'일). 평균은 시기별 평균의 평균이고, 시기가 적으면 숫자가 크게 흔들려요. 아직 기간이 지나지 않은 최근 시기는 해당 열에서 빠져요. 지수 가격 기준(배당 제외)이에요.'+(res.n===0?' 비슷한 값이었던 적이 없어요.':'')+'</div>';
+    '<div class="fwdn">'+S.year+'년 이후 지금과 비슷한 값(범위 안)에 머문 구간을 한 번으로 세요(총 '+res.nd+'일). 평균은 시기별 평균의 평균이고, 시기가 적으면 숫자가 크게 흔들려요. 아직 기간이 지나지 않은 최근 시기는 해당 열에서 빠져요. 나스닥100은 나스닥 100 지수(NDX), 반도체는 필라델피아 반도체 지수(SOX)예요. 지수 가격 기준(배당 제외)이에요.'+(res.n===0?' 비슷한 값이었던 적이 없어요.':'')+'</div>';
 }
 function mktView(r){   /* 기준 시작 연도 1월 1일부터의 값만 */
   var t0=Date.UTC(S.year,0,1), k=0; while(k<r.ts.length-1 && r.ts[k]<t0) k++;
