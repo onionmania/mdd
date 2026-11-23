@@ -294,6 +294,9 @@ details.legend p{margin:10px 0 0}
 .srch svg{width:19px;height:19px;color:var(--muted);flex:none}
 .srch input{flex:1;min-width:0;height:44px;border:0;background:none;outline:none;font-size:16px}
 .srch input::placeholder{color:var(--muted)}
+.srch .clr{border:0;background:none;color:var(--muted);width:30px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;flex:none;margin-right:-4px}
+.srch .clr[hidden]{display:none}
+.srch .clr svg{width:18px;height:18px}
 .srch .x{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:0 10px;height:36px}
 .catpick{flex:none;margin-top:8px;padding:4px 2px;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none}
 .catpick::-webkit-scrollbar{display:none}
@@ -522,6 +525,7 @@ details.legend p{margin:10px 0 0}
   <div class="srch">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input id="symIn" placeholder="티커나 회사 이름 (예: AAPL, 엔비디아)" maxlength="30" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search">
+    <button class="clr" id="symClr" type="button" aria-label="입력 지우기" hidden><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="var(--surface2)" stroke-width="2" stroke-linecap="round" fill="none"/></svg></button>
     <button class="x" id="dropClose">닫기</button>
   </div>
   <div class="dres" id="dres"></div>
@@ -881,14 +885,14 @@ function loadSeries(sym,force){
   var cached = cacheGet(sym);
   if(cached && !force && cacheFresh(cached)){
     S.mode = S.mode || "live";
-    return Promise.resolve({t:cached.t,c:cached.c,name:cached.name,cap:cached.cap||null,demo:false});
+    return Promise.resolve({t:cached.t,c:cached.c,name:cached.name,cap:cached.cap||null,demo:false,at:cached.ts});
   }
   return fetchLive(sym).then(function(s){
     S.mode="live";
-    return fetchCap(sym).then(function(cap){ s.cap=cap; cacheSet(sym,s); return s; });
+    return fetchCap(sym).then(function(cap){ s.cap=cap; s.at=Date.now(); cacheSet(sym,s); return s; });
   }).catch(function(e){
     if(e && e.notFound) throw e;
-    if(cached){ S.mode="live"; return {t:cached.t,c:cached.c,name:cached.name,cap:cached.cap||null,demo:false,stale:true}; }
+    if(cached){ S.mode="live"; return {t:cached.t,c:cached.c,name:cached.name,cap:cached.cap||null,demo:false,stale:true,at:cached.ts}; }
     if(S.mode===null){ S.mode="demo"; return demoSeries(sym); }
     throw e;
   });
@@ -1038,10 +1042,15 @@ function catColor(id){
 }
 function ccAttr(sym){ var c=catColor(groupOf(sym)); return c?{cls:" hascat",st:' style="--cc:'+c+'"'}:{cls:"",st:""}; }
 function setCatColor(id,c){ S.cats.forEach(function(x){ if(x.id===id){ if(c) x.color=c; else delete x.color; } }); save(); render(); }
+function nextCatColor(){
+  var used={}; S.cats.forEach(function(c){ if(c.color) used[c.color]=1; });
+  for(var i=0;i<CAT_COLORS.length;i++){ if(!used[CAT_COLORS[i][0]]) return CAT_COLORS[i][0]; }
+  return CAT_COLORS[S.cats.length%CAT_COLORS.length][0];
+}
 function newCatId(){ return "c"+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36); }
 function enableCats(){
   if(S.cats.length===0){
-    var a={id:newCatId(),name:"지수·ETF"}, b={id:newCatId(),name:"개별 종목"};
+    var a={id:newCatId(),name:"지수·ETF",color:CAT_COLORS[0][0]}, b={id:newCatId(),name:"개별 종목",color:CAT_COLORS[1][0]};
     S.cats=[a,b];
     S.tickers.forEach(function(sym){
       var p=POP_MAP[sym]; if(p) S.catOf[sym]= p[3]==="e" ? a.id : b.id;
@@ -1052,7 +1061,7 @@ function enableCats(){
 function addCategory(name){
   name=(name||"").trim().slice(0,12);
   if(!name){ toast("카테고리 이름을 입력해 주세요"); return false; }
-  var c={id:newCatId(),name:name}; S.cats.push(c);
+  var c={id:newCatId(),name:name,color:nextCatColor()}; S.cats.push(c);
   if(S.catLayout==="h") S.tab=c.id;
   save(); render(); toast("‘"+name+"’ 카테고리를 만들었어요"); return true;
 }
@@ -1326,7 +1335,12 @@ function srcInfo(){
   sp.classList.toggle("spin",live&&(busy>0||spinHold));
   if(!last){ nm.textContent=S.tickers.length?"데이터":""; dt.textContent=S.tickers.length?"불러오는 중…":""; return; }
   nm.textContent=live?"Yahoo Finance":"샘플 데이터";
-  dt.textContent=shortDate(last)+(live&&usOpen()?" 장중":" 종가");
+  var at=0; S.tickers.forEach(function(sym){ var x=store[sym]; if(x&&x.at&&x.at>at) at=x.at; });
+  if(!at) at=Date.now();
+  var kst="";
+  try{ var o={}; new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Seoul",year:"2-digit",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date(at)).forEach(function(q){ o[q.type]=q.value; });
+    kst=o.year+"."+o.month+"."+o.day+" "+(o.hour==="24"?"00":o.hour)+":"+o.minute; }catch(e){ kst=shortDate(last); }
+  dt.textContent=kst+" 기준"+(live&&usOpen()?" · 장중":"");
 }
 function fadeRows(){ var r=document.getElementById("rows"); r.classList.remove("fade"); void r.offsetWidth; r.classList.add("fade"); }
 
@@ -2005,9 +2019,16 @@ function collapseRow(){
   var e=rowEl(openSym); if(e){ e.classList.remove("open"); var rr=e.querySelector(".rr"); if(rr) rr.setAttribute("aria-expanded","false"); }
   openSym=null;
 }
+var exitArm=0;
+try{ history.pushState({mdd:"root"},""); }catch(e){}
 window.addEventListener("popstate",function(){
   if(ovSkip>0){ ovSkip--; return; }
-  var n=ovStack.pop(); if(!n) return;
+  var n=ovStack.pop();
+  if(!n){
+    if(Date.now()-exitArm<2500){ exitArm=0; try{ history.back(); }catch(e){} return; }
+    exitArm=Date.now(); try{ history.pushState({mdd:"root"},""); }catch(e){}
+    toast("한 번 더 누르면 종료돼요"); return;
+  }
   if(n==="row"){ collapseRow(); return; }
   closeDlg(); if(n==="drop") rawCloseDrop(); else rawCloseSettings();
 });
@@ -2130,7 +2151,7 @@ var Q = {timer:null, seq:0, items:[], label:"", direct:null, remote:[]};
 function openDrop(){
   pushOv("drop");
   S.addCat=(catsActive()&&S.tab!=="_all"&&S.tab!=="_none")?S.tab:"_none";
-  var inp=document.getElementById("symIn"); inp.value="";
+  var inp=document.getElementById("symIn"); inp.value=""; document.getElementById("symClr").hidden=true;
   inp.placeholder=(S.addCat!=="_none"?"‘"+catName(S.addCat)+"’에 추가 · ":"")+"티커나 회사 이름";
   Q.remote=[]; runLocal();
   document.getElementById("veil2").classList.add("on"); document.getElementById("drop").classList.add("on");
@@ -2305,7 +2326,11 @@ function init(){
   dlg.addEventListener("click",onDlgClick);
   dlg.addEventListener("keydown",function(e){ if(e.key==="Enter"){ var p=dlg.querySelector(".pri"); if(p){ e.preventDefault(); p.click(); } } });
   document.getElementById("dlgv").onclick=closeDlg;
-  var inp=document.getElementById("symIn");
+  var inp=document.getElementById("symIn"), clr=document.getElementById("symClr");
+  function clrSync(){ clr.hidden=!inp.value; }
+  inp.addEventListener("input",clrSync);
+  clr.onmousedown=function(e){ e.preventDefault(); };
+  clr.onclick=function(){ inp.value=""; clrSync(); onSearchInput(); inp.focus(); };
   inp.addEventListener("input",onSearchInput);
   inp.addEventListener("keydown",function(e){
     if(e.key!=="Enter") return; e.preventDefault();
