@@ -1423,13 +1423,12 @@ function fetchFG(){
     }).catch(function(){ return r; });
   });
 }
-var HY_URL="https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2";
 function fetchHY(){
-  var u=HY_URL+"&cosd="+Math.max(S.year,2000)+"-01-01";
-  return getText(API_BASE+"/y?u="+encodeURIComponent(u),20000).then(function(txt){
+  var st=Math.max(S.year,2000)+"-01-01";
+  return getJson(API_BASE+"/fred?id=BAMLH0A0HYM2&start="+st,20000).then(function(j){
     var ts=[], hist=[];
-    txt.split(/\r?\n/).forEach(function(line){
-      var f=line.split(","), m=(f[0]||"").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/), x=parseFloat(f[1]);
+    ((j&&j.observations)||[]).forEach(function(o){
+      var m=String(o.date||"").match(/^(\d{4})-(\d{2})-(\d{2})$/), x=parseFloat(o.value);
       if(!m||!isFinite(x)) return;
       ts.push(Date.UTC(+m[1],+m[2]-1,+m[3])); hist.push(x);
     });
