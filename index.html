@@ -1378,7 +1378,7 @@ var MKT=[
   {id:"vix", name:"VIX", sym:"^VIX",
    title:"VIX 변동성 지수", desc:"S&P 500 옵션이 예상하는 앞으로 30일의 변동성이에요. 높을수록 시장이 불안하다는 뜻이에요."},
   {id:"hy", name:"하이일드", dg:2,
-   title:"하이일드 스프레드 (ICE BofA)", desc:"신용등급이 낮은 회사채가 미국 국채보다 더 얹어 주는 금리(%p)예요. 높을수록 시장이 불안하다는 뜻이에요. 제공 자료가 최근 3년치예요."},
+   title:"하이일드 스프레드 (ICE BofA)", desc:"신용등급이 낮은 회사채가 미국 국채보다 더 얹어 주는 금리(%p)예요. 높을수록 시장이 불안하다는 뜻이에요."},
   {id:"move",name:"MOVE", sym:"^MOVE",
    title:"MOVE 채권 변동성 지수", desc:"미국 국채 금리의 예상 변동성이에요. 채권 시장의 VIX로 불려요. 높을수록 시장이 불안하다는 뜻이에요."}
 ];
@@ -1596,7 +1596,8 @@ function mktRender(){
   var fo=document.getElementById("mktFold"), pn=document.getElementById("mktPanel");
   var m=MKT.filter(function(x){ return x.id===mktOpen; })[0], r=m&&mkt[m.id];
   if(m&&r){
-    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+'</p>'+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"))+mktFwdHtml(m,r);
+    var hn=""; if(m.id==="hy"&&r.ts&&r.ts.length&&r.ts[0]>Date.UTC(S.year,0,1)+45*86400000){ var f0=new Date(r.ts[0]); hn=" 자료는 "+f0.getUTCFullYear()+"년 "+(f0.getUTCMonth()+1)+"월부터만 있어요."; }
+    pn.innerHTML='<h4>'+m.title+'</h4><p>'+m.desc+hn+'</p>'+mktSpark(r,colorOr(m.id,tierFor(m.id,r.v),"var(--accent)"))+mktFwdHtml(m,r);
     fo.classList.add("open");
   } else if(!m) fo.classList.remove("open");
 }
